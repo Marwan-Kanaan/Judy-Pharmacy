@@ -140,7 +140,7 @@ $conn->close(); // Close the connection
         <!-- Sidebar -->
         <div class="sidebar">
             <h2>Admin Panel</h2>
-            <a href="dashboard.php">Dashboard</a>
+            <a href="../dashboard.php">Dashboard</a>
             <a href="view_all_users.php">View Users</a>
             <a href="../../products/view_all.php">Products</a>
             <a href="../../orders/view_all.php">Orders</a>
@@ -177,6 +177,8 @@ $conn->close(); // Close the connection
                         <option value="pharmacist">Pharmacist</option>
                     </select>
                 </div>
+
+                <h2>Address Details</h2>
 
                 <div class="form-group">
                     <label for="street">Street:</label>

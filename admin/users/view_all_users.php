@@ -350,6 +350,7 @@ $conn->close(); // Close the connection
             </div>
         </div>
     </div>
+    
 </body>
 
 </html>

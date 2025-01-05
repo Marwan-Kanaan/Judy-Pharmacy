@@ -42,38 +42,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $state = $_POST['state'];
     $country = $_POST['country'];
 
+    $sqlUpdateAddress = "UPDATE addresses SET street = ?, city = ?, state = ?, country = ? WHERE user_id = ?";
+    $stmtUpdateAddress = $conn->prepare($sqlUpdateAddress);
+    $stmtUpdateAddress->bind_param("ssssi", $street, $city, $state, $country, $id);
+    $stmtUpdateAddress->execute();
     // Update user
+
+
+
+    // Update address
     $sqlUpdateUser = "UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?";
     $stmtUpdateUser = $conn->prepare($sqlUpdateUser);
     $stmtUpdateUser->bind_param("sssi", $name, $email, $role, $id);
     $stmtUpdateUser->execute();
 
-    if ($stmtUpdateUser->affected_rows > 0) {
-        // Update address
-        $sqlUpdateAddress = "UPDATE addresses SET street = ?, city = ?, state = ?, country = ? WHERE user_id = ?";
-        $stmtUpdateAddress = $conn->prepare($sqlUpdateAddress);
-        $stmtUpdateAddress->bind_param("sssii", $street, $city, $state, $country, $id);
-        $stmtUpdateAddress->execute();
-
-        if ($stmtUpdateAddress->affected_rows > 0) {
-            header("Location: view_all_users.php");
-            exit();
-        } else {
-            $error = "Failed to update address.";
-        }
-    } else {
-        $error = "Failed to update user details.";
-    }
+    $error = "Failed to update user details.";
+} else {
+    $error = "Invalid request method.";
 }
 
 // Close connections
 $conn->close();
 ?>
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -140,7 +130,8 @@ $conn->close();
             margin-bottom: 5px;
         }
 
-        input, select {
+        input,
+        select {
             width: 100%;
             padding: 10px;
             margin-bottom: 15px;
@@ -173,7 +164,7 @@ $conn->close();
         <!-- Sidebar -->
         <div class="sidebar">
             <h2>Admin Panel</h2>
-            <a href="dashboard.php">Dashboard</a>
+            <a href="../dashboard.php">Dashboard</a>
             <a href="view_all_users.php">View Users</a>
             <a href="../../products/view_all.php">Products</a>
             <a href="../../orders/view_all.php">Orders</a>
@@ -188,15 +179,15 @@ $conn->close();
 
             <form method="POST" action="">
                 <input type="hidden" name="id" value="<?php echo $user['id']; ?>">
-                
+
                 <div class="form-group">
                     <label for="name">Name:</label>
-                    <input type="text" id="name" name="name" value="<?php echo $user['name']; ?>" required>
+                    <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($user['name']); ?>" required>
                 </div>
 
                 <div class="form-group">
                     <label for="email">Email:</label>
-                    <input type="email" id="email" name="email" value="<?php echo $user['email']; ?>" required>
+                    <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
                 </div>
 
                 <div class="form-group">
@@ -211,26 +202,30 @@ $conn->close();
 
                 <div class="form-group">
                     <label for="street">Street:</label>
-                    <input type="text" id="street" name="street" value="<?php echo $user['street']; ?>" required>
+                    <input type="text" id="street" name="street" value="<?php echo htmlspecialchars($user['street']); ?>" required>
                 </div>
 
                 <div class="form-group">
                     <label for="city">City:</label>
-                    <input type="text" id="city" name="city" value="<?php echo $user['city']; ?>" required>
+                    <input type="text" id="city" name="city" value="<?php echo htmlspecialchars($user['city']); ?>" required>
                 </div>
 
                 <div class="form-group">
                     <label for="state">State:</label>
-                    <input type="text" id="state" name="state" value="<?php echo $user['state']; ?>" required>
+                    <input type="text" id="state" name="state" value="<?php echo htmlspecialchars($user['state']); ?>" required>
                 </div>
 
                 <div class="form-group">
                     <label for="country">Country:</label>
-                    <input type="text" id="country" name="country" value="<?php echo $user['country']; ?>" required>
+                    <input type="text" id="country" name="country" value="<?php echo htmlspecialchars($user['country']); ?>" required>
                 </div>
 
                 <button type="submit">Update User</button>
             </form>
+
+            <?php if (isset($error)) : ?>
+                <p style="color: red;"><?php echo $error; ?></p>
+            <?php endif; ?>
         </div>
     </div>
 </body>

@@ -60,7 +60,7 @@ while ($row = $monthly_orders_query->fetch_assoc()) {
 $total_users_query = $conn->query("
     SELECT COUNT(*) 
     FROM users 
-    WHERE role = 'customer'  -- Filter users with 'customer' role
+    WHERE role = 'customer'   
 ");
 $total_users = $total_users_query->fetch_row()[0];
 
