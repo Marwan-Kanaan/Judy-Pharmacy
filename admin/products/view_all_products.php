@@ -10,34 +10,27 @@ if (!isset($_SESSION['user_id'])) {
 
 // Pagination variables
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$limit = 10; // Number of users per page
+$limit = 10; // Number of products per page
 $offset = ($page - 1) * $limit;
 
-// Search and filter
+// Search filter
 $search = isset($_GET['search']) ? $_GET['search'] : '';
-$role = isset($_GET['role']) ? $_GET['role'] : '';
 
-// Query to fetch users with addresses
-$sql = "
-    SELECT u.id, u.name, u.email, u.role, a.street, a.city, a.state, a.country 
-    FROM users u
-    LEFT JOIN addresses a ON u.id = a.user_id
-    WHERE u.role != 'admin'
-";
+// Query to fetch products with category details
+$sql = "SELECT 
+            p.*, 
+            c.name AS category_name, 
+            c.description AS category_description 
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE 1=1";
 $params = [];
 
 // Apply search filter
 if (!empty($search)) {
-    $sql .= " AND (u.name LIKE ? OR u.email LIKE ? OR u.id LIKE ?)";
+    $sql .= " AND (p.name LIKE ? OR p.description LIKE ?)";
     $params[] = "%$search%";
     $params[] = "%$search%";
-    $params[] = "%$search%";
-}
-
-// Apply role filter
-if (!empty($role)) {
-    $sql .= " AND u.role = ?";
-    $params[] = $role;
 }
 
 // Pagination
@@ -51,51 +44,40 @@ $types = str_repeat('s', count($params) - 2) . "ii"; // Dynamic types: 's' for s
 $stmt->bind_param($types, ...$params);
 $stmt->execute();
 $result = $stmt->get_result();
-$users = $result->fetch_all(MYSQLI_ASSOC);
+$products = $result->fetch_all(MYSQLI_ASSOC);
 
-// Count total users with addresses for pagination
-$totalUsersQuery = "
-    SELECT COUNT(*) 
-    FROM users u
-    LEFT JOIN addresses a ON u.id = a.user_id
-    WHERE u.role != 'admin'
-";
-$countParams = [];
+// Count total products for pagination
+$totalProductsQuery = "SELECT COUNT(*) FROM products p";
+$totalProductsParams = [];
 
-// Apply search filter
+// Apply search filter for counting
 if (!empty($search)) {
-    $totalUsersQuery .= " AND (u.name LIKE ? OR u.email LIKE ? OR u.id LIKE ?)";
-    $countParams[] = "%$search%";
-    $countParams[] = "%$search%";
-    $countParams[] = "%$search%";
+    $totalProductsQuery .= " WHERE p.name LIKE ? OR p.description LIKE ?";
+    $totalProductsParams[] = "%$search%";
+    $totalProductsParams[] = "%$search%";
 }
 
-// Apply role filter
-if (!empty($role)) {
-    $totalUsersQuery .= " AND u.role = ?";
-    $countParams[] = $role;
+$totalProductsStmt = $conn->prepare($totalProductsQuery);
+
+if (!empty($totalProductsParams)) {
+    $totalCountTypes = str_repeat('s', count($totalProductsParams));
+    $totalProductsStmt->bind_param($totalCountTypes, ...$totalProductsParams);
 }
 
-$totalUsersStmt = $conn->prepare($totalUsersQuery);
-
-if (!empty($countParams)) {
-    $countTypes = str_repeat('s', count($countParams));
-    $totalUsersStmt->bind_param($countTypes, ...$countParams);
-}
-
-$totalUsersStmt->execute();
-$totalUsersResult = $totalUsersStmt->get_result();
-$totalUsers = $totalUsersResult->fetch_row()[0];
+$totalProductsStmt->execute();
+$totalProductsResult = $totalProductsStmt->get_result();
+$totalProducts = $totalProductsResult->fetch_row()[0];
 
 $conn->close(); // Close the connection
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View All Users</title>
+    <title>View All Products</title>
     <style>
         /* Reset and Base Styles */
         * {
@@ -153,7 +135,7 @@ $conn->close(); // Close the connection
             width: 500%;
         }
 
-        .navbar select, .navbar input {
+        .navbar input {
             background-color: #2c3e50;
             color: #ecf0f1;
             border: none;
@@ -181,7 +163,7 @@ $conn->close(); // Close the connection
         .table th,
         .table td {
             border: 1px solid #ddd;
-            padding: 25px;
+            padding: 15px;
             text-align: left;
         }
 
@@ -229,7 +211,7 @@ $conn->close(); // Close the connection
         }
 
         /* Buttons */
-        .add-user {
+        .add-product {
             display: inline-block;
             background-color: #2ecc71;
             color: #ffffff;
@@ -240,32 +222,16 @@ $conn->close(); // Close the connection
             transition: background-color 0.3s;
         }
 
-        .add-user:hover {
+        .add-product:hover {
             background-color: #27ae60;
-        }
-
-        .search-btn {
-            background-color: #3498db;
-            color: #ffffff;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .search-btn:hover {
-            background-color: #2980b9;
         }
     </style>
     <script>
         // Function to update the URL and search
         function updateURL() {
             let search = document.getElementById('search').value;
-            let role = document.getElementById('role').value;
             let url = new URL(window.location.href);
             url.searchParams.set('search', search);
-            url.searchParams.set('role', role);
             window.history.pushState({}, '', url);
             window.location.reload();
         }
@@ -277,8 +243,8 @@ $conn->close(); // Close the connection
     <div class="sidebar">
         <h2>Admin Panel</h2>
         <a href="../../admin/dashboard.php">Dashboard</a>
-        <a href="view_all_users.php">Users</a>
-        <a href="../products/view_all_products.php">Products</a>
+        <a href="../users/view_all_users.php">Users</a>
+        <a href="view_all_products.php">Products</a>
         <a href="../../orders/view_all.php">Orders</a>
         <a href="../../prescriptions/view_all.php">Prescriptions</a>
         <a href="../../settings.php">Settings</a>
@@ -290,50 +256,55 @@ $conn->close(); // Close the connection
         <!-- Navbar -->
         <div class="navbar">
             <div style="display: flex; gap: 10px;">
-                <input type="text" id="search" placeholder="Search by name, email or ID..." value="<?php echo htmlspecialchars($search); ?>">
-                <button class="search-btn" onclick="updateURL()">Search</button>
-                <select name="role" id="role">
-                    <option value="">All Roles</option>
-                    <option value="customer" <?php if ($role === 'customer') echo 'selected'; ?>>Customer</option>
-                    <option value="pharmacist" <?php if ($role === 'pharmacist') echo 'selected'; ?>>Pharmacist</option>
-                </select>
+                <input type="text" id="search" placeholder="Search by name or description..." value="<?php echo htmlspecialchars($search); ?>">
+                <button onclick="updateURL()" class="search-btn">Search</button>
             </div>
         </div>
 
         <!-- Content Area -->
         <div class="content">
-            <h1>View All Users</h1>
+            <h1>View All Products</h1>
 
             <!-- Add buttons -->
             <div style="margin-bottom: 20px;">
-                <a href="add_user.php" class="add-user">Add User</a>
+                <a href="add_product.php" class="add-product">Add Product</a>
             </div>
 
             <table class="table">
                 <tr>
                     <th>ID</th>
                     <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Street</th>
-                    <th>City</th>
-                    <th>State</th>
-                    <th>Country</th>
+                    <th>Description</th>
+                    <th>Price</th>
+                    <th>Category Name</th>
+                    <th>Category Description</th>
+                    <th>Quantity</th>
+                    <th>Image</th>
+                    <th>Prescription Required</th>
                     <th>Actions</th>
                 </tr>
-                <?php foreach ($users as $user) { ?>
+                <?php foreach ($products as $product) { ?>
                     <tr>
-                        <td><?php echo $user['id']; ?></td>
-                        <td><?php echo ucfirst($user['name']); ?></td>
-                        <td><?php echo $user['email']; ?></td>
-                        <td><?php echo ucfirst($user['role']); ?></td>
-                        <td><?php echo ucfirst($user['street']); ?></td>
-                        <td><?php echo ucfirst($user['city']); ?></td>
-                        <td><?php echo ucfirst($user['state']); ?></td>
-                        <td><?php echo ucfirst($user['country']); ?></td>
+                        <td><?php echo $product['id']; ?></td>
+                        <td><?php echo ucfirst($product['name']); ?></td>
+                        <td><?php echo $product['description']; ?></td>
+                        <td><?php echo number_format($product['price'], 2); ?></td>
+                        <td><?php echo ucfirst($product['category_name']); ?></td>
+                        <td><?php echo $product['category_description']; ?></td>
+                        <td><?php echo $product['stock']; ?></td>
+                        <td>
+                            <?php if (!empty($product['image_path'])) { ?>
+                                <img src="../../uploads/<?php echo $product['image_path']; ?>" alt="Product Image" style="width: 50px; height: 50px; object-fit: cover;">
+                            <?php } else { ?>
+                                No Image
+                            <?php } ?>
+                        </td>
+                        <td>
+                            <?php echo $product['is_prescription_required'] ? 'Yes' : 'No'; ?>
+                        </td>
                         <td class="actions">
-                            <a href="edit_user.php?id=<?php echo $user['id']; ?>" class="edit">Edit</a>
-                            <a href="delete_user.php?id=<?php echo $user['id']; ?>">Delete</a>
+                            <a href="edit_product.php?id=<?php echo $product['id']; ?>" class="edit">Edit</a>
+                            <a href="delete_product.php?id=<?php echo $product['id']; ?>" class="delete">Delete</a>
                         </td>
                     </tr>
                 <?php } ?>
@@ -342,15 +313,14 @@ $conn->close(); // Close the connection
             <!-- Pagination Links -->
             <div class="pagination">
                 <?php
-                $totalPages = ceil($totalUsers / $limit);
+                $totalPages = ceil($totalProducts / $limit);
                 for ($i = 1; $i <= $totalPages; $i++) {
-                    echo '<a href="?page=' . $i . ($search ? '&search=' . $search : '') . ($role ? '&role=' . $role : '') . '">' . $i . '</a>';
+                    echo '<a href="?page=' . $i . ($search ? '&search=' . $search : '') . '">' . $i . '</a>';
                 }
                 ?>
             </div>
         </div>
     </div>
-    
 </body>
 
 </html>

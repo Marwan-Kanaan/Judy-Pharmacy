@@ -229,7 +229,7 @@ $conn->close();
     <h2><?php echo ucfirst($user['name']); ?> Panel</h2>
     <a href="#">Dashboard</a>
     <a href="users/view_all_users.php">Users</a>
-    <a href="#">Products</a>
+    <a href="products/view_all_products.php">Products</a>
     <a href="#">Orders</a>
     <a href="#">Prescriptions</a>
     <a href="#">Settings</a>
