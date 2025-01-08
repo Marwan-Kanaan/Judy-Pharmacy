@@ -135,7 +135,7 @@ $conn->close();
             width: calc(115% - 250px);
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: end;
             padding: 0 20px;
         }
 
@@ -240,7 +240,6 @@ $conn->close();
   <div class="main">
     <!-- Navbar -->
     <div class="navbar">
-      <input type="text" class="search-box" placeholder="Search...">
       <div class="profile">
         <img src="<?php echo $user['image_path']; ?>" alt="Profile">
         <span><?php echo ucfirst($user['name']); ?></span>

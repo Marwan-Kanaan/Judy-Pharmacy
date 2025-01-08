@@ -8,6 +8,11 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// Fetch categories for the filter
+$categoryQuery = "SELECT id, name FROM categories";
+$categoryResult = $conn->query($categoryQuery);
+$categories = $categoryResult->fetch_all(MYSQLI_ASSOC);
+
 // Pagination variables
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $limit = 10; // Number of products per page
@@ -15,6 +20,7 @@ $offset = ($page - 1) * $limit;
 
 // Search filter
 $search = isset($_GET['search']) ? $_GET['search'] : '';
+$categoryFilter = isset($_GET['category']) ? (int)$_GET['category'] : 0;
 
 // Query to fetch products with category details
 $sql = "SELECT 
@@ -33,6 +39,12 @@ if (!empty($search)) {
     $params[] = "%$search%";
 }
 
+// Apply category filter
+if ($categoryFilter > 0) {
+    $sql .= " AND p.category_id = ?";
+    $params[] = $categoryFilter;
+}
+
 // Pagination
 $sql .= " LIMIT ? OFFSET ?";
 $params[] = $limit;
@@ -47,21 +59,29 @@ $result = $stmt->get_result();
 $products = $result->fetch_all(MYSQLI_ASSOC);
 
 // Count total products for pagination
-$totalProductsQuery = "SELECT COUNT(*) FROM products p";
+$totalProductsQuery = "SELECT COUNT(*) FROM products p WHERE 1=1";
 $totalProductsParams = [];
+$totalProductsTypes = '';
 
 // Apply search filter for counting
 if (!empty($search)) {
-    $totalProductsQuery .= " WHERE p.name LIKE ? OR p.description LIKE ?";
+    $totalProductsQuery .= " AND (p.name LIKE ? OR p.description LIKE ?)";
     $totalProductsParams[] = "%$search%";
     $totalProductsParams[] = "%$search%";
+    $totalProductsTypes .= 'ss';
+}
+
+// Apply category filter for counting
+if ($categoryFilter > 0) {
+    $totalProductsQuery .= " AND p.category_id = ?";
+    $totalProductsParams[] = $categoryFilter;
+    $totalProductsTypes .= 'i';
 }
 
 $totalProductsStmt = $conn->prepare($totalProductsQuery);
 
 if (!empty($totalProductsParams)) {
-    $totalCountTypes = str_repeat('s', count($totalProductsParams));
-    $totalProductsStmt->bind_param($totalCountTypes, ...$totalProductsParams);
+    $totalProductsStmt->bind_param($totalProductsTypes, ...$totalProductsParams);
 }
 
 $totalProductsStmt->execute();
@@ -98,7 +118,7 @@ $conn->close(); // Close the connection
         .sidebar {
             background-color: #2c3e50;
             color: #ecf0f1;
-            width: 238px;
+            width: 246px;
             padding: 20px;
             display: flex;
             flex-direction: column;
@@ -135,7 +155,7 @@ $conn->close(); // Close the connection
             width: 500%;
         }
 
-        .navbar input {
+        .navbar select, .navbar input {
             background-color: #2c3e50;
             color: #ecf0f1;
             border: none;
@@ -143,6 +163,20 @@ $conn->close(); // Close the connection
             border-radius: 5px;
         }
 
+        .search-btn {
+            background-color: #3498db;
+            color: #ffffff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .search-btn:hover {
+            background-color: #2980b9;
+        }
+        
         /* Content Area */
         .content {
             flex: 1;
@@ -227,11 +261,12 @@ $conn->close(); // Close the connection
         }
     </style>
     <script>
-        // Function to update the URL and search
         function updateURL() {
             let search = document.getElementById('search').value;
+            let category = document.getElementById('category').value;
             let url = new URL(window.location.href);
             url.searchParams.set('search', search);
+            url.searchParams.set('category', category);
             window.history.pushState({}, '', url);
             window.location.reload();
         }
@@ -257,6 +292,14 @@ $conn->close(); // Close the connection
         <div class="navbar">
             <div style="display: flex; gap: 10px;">
                 <input type="text" id="search" placeholder="Search by name or description..." value="<?php echo htmlspecialchars($search); ?>">
+                <select id="category">
+                    <option value="0">All Categories</option>
+                    <?php foreach ($categories as $category) { ?>
+                        <option value="<?php echo $category['id']; ?>" <?php echo $categoryFilter == $category['id'] ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($category['name']); ?>
+                        </option>
+                    <?php } ?>
+                </select>
                 <button onclick="updateURL()" class="search-btn">Search</button>
             </div>
         </div>

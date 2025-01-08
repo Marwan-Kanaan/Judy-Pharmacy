@@ -291,12 +291,12 @@ $conn->close(); // Close the connection
         <div class="navbar">
             <div style="display: flex; gap: 10px;">
                 <input type="text" id="search" placeholder="Search by name, email or ID..." value="<?php echo htmlspecialchars($search); ?>">
-                <button class="search-btn" onclick="updateURL()">Search</button>
                 <select name="role" id="role">
                     <option value="">All Roles</option>
                     <option value="customer" <?php if ($role === 'customer') echo 'selected'; ?>>Customer</option>
                     <option value="pharmacist" <?php if ($role === 'pharmacist') echo 'selected'; ?>>Pharmacist</option>
                 </select>
+                <button class="search-btn" onclick="updateURL()">Search</button>
             </div>
         </div>
 

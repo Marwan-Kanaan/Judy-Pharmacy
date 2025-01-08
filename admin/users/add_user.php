@@ -141,7 +141,7 @@ $conn->close(); // Close the connection
         <div class="sidebar">
             <h2>Admin Panel</h2>
             <a href="../dashboard.php">Dashboard</a>
-            <a href="view_all_users.php">View Users</a>
+            <a href="view_all_users.php">Users</a>
             <a href="../products/view_all_products.php">Products</a>
             <a href="../../orders/view_all.php">Orders</a>
             <a href="../../prescriptions/view_all.php">Prescriptions</a>
