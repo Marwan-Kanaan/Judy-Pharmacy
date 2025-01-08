@@ -333,7 +333,8 @@ $conn->close(); // Close the connection
                         <td><?php echo ucfirst($user['country']); ?></td>
                         <td class="actions">
                             <a href="edit_user.php?id=<?php echo $user['id']; ?>" class="edit">Edit</a>
-                            <a href="delete_user.php?id=<?php echo $user['id']; ?>">Delete</a>
+                            <a href="delete_user.php?id=<?php echo $user['id']; 
+                            ?>">Delete</a>
                         </td>
                     </tr>
                 <?php } ?>

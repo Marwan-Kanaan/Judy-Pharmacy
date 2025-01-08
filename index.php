@@ -495,6 +495,77 @@ mysqli_close($conn);
         font-size: 0.9rem;
     }
 
+    /* Animation Keyframes */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-50px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes zoomIn {
+        from {
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    /* Applying Animations */
+    .welcome {
+        animation: fadeIn 2s ease-out;
+        animation-delay: 2s;
+    }
+
+    .category-card {
+        animation: zoomIn 2s ease-in-out;
+        animation-delay: 0.4s;
+    }
+
+    .bmi-calculator {
+        animation: fadeIn 4s ease-in-out;
+        animation-delay: 0.7s;
+    }
+
+    .map-container {
+        animation: slideIn 1.5s ease-out;
+        animation-delay: 0.4s;
+    }
+
+    .animated-section {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 1s ease, transform 1s ease;
+    }
+
+    .animated-section.animate {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+
+
     @media (max-width: 768px) {
         .card {
             width: 45%;
@@ -590,86 +661,91 @@ mysqli_close($conn);
         </div>
     </section>
 
-    <section class="categories">
-        <div class="container">
-            <h2>Our Categories</h2>
-            <div class="category-list">
-                <?php if (!empty($categories)) : ?>
-                    <?php foreach ($categories as $category) : ?>
-                        <div class="category-card">
-                            <img src="<?= htmlspecialchars($category['image_path']) ?>" alt="<?= htmlspecialchars($category['name']) ?>">
-                            <h3><?= htmlspecialchars($category['name']) ?></h3>
-                            <p><?= htmlspecialchars($category['description']) ?></p>
-                        </div>
-                    <?php endforeach; ?>
-                <?php else : ?>
-                    <p>No categories available.</p>
-                <?php endif; ?>
+    <div class="categories animated-section">
+        <section class="categories">
+            <div class="container">
+                <h2>Our Categories</h2>
+                <div class="category-list">
+                    <?php if (!empty($categories)) : ?>
+                        <?php foreach ($categories as $category) : ?>
+                            <div class="category-card">
+                                <img src="<?= htmlspecialchars($category['image_path']) ?>" alt="<?= htmlspecialchars($category['name']) ?>">
+                                <h3><?= htmlspecialchars($category['name']) ?></h3>
+                                <p><?= htmlspecialchars($category['description']) ?></p>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <p>No categories available.</p>
+                    <?php endif; ?>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
+    </div>
 
-    <section class="bmi-calculator">
-        <div class="container">
-            <h2>BMI Calculator</h2>
-            <div class="bmi-content">
-                <!-- Left side: Calculator -->
-                <div class="bmi-form">
-                    <form id="bmi-form">
-                        <h3>Calculate Your BMI</h3>
-                        <div class="input-group">
-                            <label for="weight">Weight (kg):</label>
-                            <input type="number" id="weight" name="weight" placeholder="Enter your weight" required>
+    <div class="bmi-calculator animated-section">
+        <section class="bmi-calculator">
+            <div class="container">
+                <h2>BMI Calculator</h2>
+                <div class="bmi-content">
+                    <!-- Left side: Calculator -->
+                    <div class="bmi-form">
+                        <form id="bmi-form">
+                            <h3>Calculate Your BMI</h3>
+                            <div class="input-group">
+                                <label for="weight">Weight (kg):</label>
+                                <input type="number" id="weight" name="weight" placeholder="Enter your weight" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="height">Height (cm):</label>
+                                <input type="number" id="height" name="height" placeholder="Enter your height" required>
+                            </div>
+                            <button type="button" class="btn" id="calculate-bmi">Calculate BMI</button>
+                        </form>
+                        <div id="bmi-result" class="bmi-result">
+                            <!-- The result will be displayed here -->
                         </div>
-                        <div class="input-group">
-                            <label for="height">Height (cm):</label>
-                            <input type="number" id="height" name="height" placeholder="Enter your height" required>
-                        </div>
-                        <button type="button" class="btn" id="calculate-bmi">Calculate BMI</button>
-                    </form>
-                    <div id="bmi-result" class="bmi-result">
-                        <!-- The result will be displayed here -->
+                    </div>
+
+                    <!-- Right side: Description -->
+                    <div class="bmi-description">
+                        <h3>Description</h3>
+                        <p>
+                            BMI is a useful measurement for most people over 18 years old.
+                            But it is only an estimate and it doesn't take into account age,
+                            ethnicity, gender, and body composition. We recommend you also
+                            check your waist measurement and other risk factors.
+                        </p>
+                        <p>
+                            Speak to your doctor, an Accredited Practising Dietitian, or a
+                            health practitioner about your weight.
+                        </p>
+                        <p>
+                            This calculator shouldn’t be used for pregnant women or children.
+                        </p>
                     </div>
                 </div>
+            </div>
+        </section>
+    </div>
 
-                <!-- Right side: Description -->
-                <div class="bmi-description">
-                    <h3>Description</h3>
-                    <p>
-                        BMI is a useful measurement for most people over 18 years old.
-                        But it is only an estimate and it doesn't take into account age,
-                        ethnicity, gender, and body composition. We recommend you also
-                        check your waist measurement and other risk factors.
-                    </p>
-                    <p>
-                        Speak to your doctor, an Accredited Practising Dietitian, or a
-                        health practitioner about your weight.
-                    </p>
-                    <p>
-                        This calculator shouldn’t be used for pregnant women or children.
-                    </p>
+    <div class="map-container animated-section">
+        <section class="map-section">
+            <div class="container">
+                <h2 class="text-center">Find Us Here</h2>
+                <div class="map-container">
+                    <iframe
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3290.3718619570564!2d35.82484297630349!3d34.442707197011174!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1521f77e073ad99f%3A0xf4b999ec60f24a42!2sPHARMACY%20JUDY!5e0!3m2!1sen!2slb!4v1735504213069!5m2!1sen!2slb"
+                        width="100%"
+                        height="400"
+                        style="border:0;"
+                        allowfullscreen=""
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <section class="map-section">
-        <div class="container">
-            <h2 class="text-center">Find Us Here</h2>
-            <div class="map-container">
-                <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3290.3718619570564!2d35.82484297630349!3d34.442707197011174!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1521f77e073ad99f%3A0xf4b999ec60f24a42!2sPHARMACY%20JUDY!5e0!3m2!1sen!2slb!4v1735504213069!5m2!1sen!2slb"
-                    width="100%"
-                    height="400"
-                    style="border:0;"
-                    allowfullscreen=""
-                    loading="lazy"
-                    referrerpolicy="no-referrer-when-downgrade">
-                </iframe>
-            </div>
-        </div>
-    </section>
-
+        </section>
+    </div>
 
 
 
@@ -720,6 +796,24 @@ mysqli_close($conn);
             document.getElementById('bmi-result').textContent = `Your BMI is ${bmi} (${category}).`;
         });
 
+        document.addEventListener("DOMContentLoaded", function() {
+            const animatedSections = document.querySelectorAll('.animated-section');
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.2
+            });
+
+            animatedSections.forEach(section => {
+                observer.observe(section);
+            });
+        });
     </script>
 
 
