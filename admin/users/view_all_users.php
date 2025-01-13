@@ -168,7 +168,11 @@ $conn->close(); // Close the connection
             flex: 1;
             padding: 20px;
             overflow-y: auto;
+            /* Enable scrolling for the content area */
+            height: calc(100vh - 60px);
+            /* Adjust for the height of the navbar */
         }
+
 
         .content h1 {
             margin-bottom: 20px;
@@ -183,7 +187,7 @@ $conn->close(); // Close the connection
         .table th,
         .table td {
             border: 1px solid #ddd;
-            padding: 25px;
+            padding: 10px;
             text-align: left;
         }
 
@@ -278,6 +282,7 @@ $conn->close(); // Close the connection
     <!-- Sidebar -->
     <div class="sidebar">
         <h2>Admin Panel</h2>
+        <a href="../../index.php">Home</a>
         <a href="../../admin/dashboard.php">Dashboard</a>
         <a href="view_all_users.php">Users</a>
         <a href="../products/view_all_products.php">Products</a>

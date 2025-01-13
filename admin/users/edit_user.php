@@ -165,6 +165,7 @@ $conn->close();
         <!-- Sidebar -->
         <div class="sidebar">
             <h2>Admin Panel</h2>
+            <a href="../../index.php">Home</a>
             <a href="../dashboard.php">Dashboard</a>
             <a href="view_all_users.php">Users</a>
             <a href="../products/view_all_products.php">Products</a>

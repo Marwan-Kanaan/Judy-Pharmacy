@@ -1,3 +1,13 @@
+<?php
+session_start();
+// Include database connection
+include 'includes/connection.php';
+
+// Check if the user is logged in
+$isLoggedIn = isset($_SESSION['user_id']);
+$userRole = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : null; // Get the user's role from the session
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -184,7 +194,7 @@
         /* Replace with your image path */
         background-size: contain;
         background-position: center;
-        background-repeat:repeat-x;
+        background-repeat: repeat-x;
         background-color: transparent;
         padding: 4rem 2rem;
         text-align: center;
@@ -279,7 +289,21 @@
                     <li><a href="about.php" class="active">About Us</a></li>
                     <li><a href="contact.php">Contact Us</a></li>
                     <li><a href="products.php">Products</a></li>
-                    <li><a href="login.php">Log In</a></li>
+
+                    <?php if ($isLoggedIn): ?>
+                        <?php if ($userRole === 'customer'): ?>
+                            <!-- Display 'Cart' and 'Profile' for customer role -->
+                            <li><a href="customer/cart.php">Cart</a></li>
+                            <li><a href="customer/profile.php">Profile</a></li>
+                            <?php elseif ($userRole === 'admin'): ?>
+                            <!-- Display admin-specific options -->
+                            <li><a href="admin/dashboard.php">Dashboard</a></li>
+                        <?php endif; ?>
+                        <li><a href="includes/logout.php">Log Out</a></li>
+                    <?php else: ?>
+                        <!-- Display 'Log In' if not logged in -->
+                        <li><a href="login.php">Log In</a></li>
+                    <?php endif; ?>
                 </ul>
             </nav>
         </header>
@@ -352,7 +376,24 @@
                     <li><a href="about.php" class="active">About Us</a></li>
                     <li><a href="contact.php">Contact Us</a></li>
                     <li><a href="products.php">Products</a></li>
-                    <li><a href="login.php">Log In</a></li>
+
+                    <?php if ($isLoggedIn): ?>
+                        <?php if ($userRole === 'customer'): ?>
+                            <!-- Display 'Cart' and 'Profile' for customer role -->
+                            <li><a href="customer/cart.php">Cart</a></li>
+                            <li><a href="customer/profile.php">Profile</a></li>
+                            <?php elseif ($userRole === 'admin'): ?>
+                            <!-- Display admin-specific options -->
+                            <li><a href="admin/dashboard.php">Dashboard</a></li>
+                        <?php elseif ($userRole === 'admin'): ?>
+                            <!-- Display admin-specific options -->
+                            <li><a href="admin/dashboard.php">Dashboard</a></li>
+                        <?php endif; ?>
+                        <li><a href="includes/logout.php">Log Out</a></li>
+                    <?php else: ?>
+                        <!-- Display 'Log In' if not logged in -->
+                        <li><a href="login.php">Log In</a></li>
+                    <?php endif; ?>
                 </ul>
             </nav>
         </div>

@@ -227,7 +227,8 @@ $conn->close();
     <!-- Sidebar -->
     <div class="sidebar">
         <h2><?php echo ucfirst($user['name']); ?> Panel</h2>
-        <a href="#">Dashboard</a>
+        <a href="../index.php">Home</a>
+        <a href="dashboard.php">Dashboard</a>
         <a href="users/view_all_users.php">Users</a>
         <a href="products/view_all_products.php">Products</a>
         <a href="#">Orders</a>

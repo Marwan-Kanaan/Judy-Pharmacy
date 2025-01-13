@@ -119,7 +119,7 @@ $conn->close(); // Close the connection
         .sidebar {
             background-color: #2c3e50;
             color: #ecf0f1;
-            width: 246px;
+            width: 238px;
             padding: 20px;
             display: flex;
             flex-direction: column;
@@ -312,6 +312,7 @@ $conn->close(); // Close the connection
     <!-- Sidebar -->
     <div class="sidebar">
         <h2>Admin Panel</h2>
+        <a href="../../index.php">Home</a>
         <a href="../../admin/dashboard.php">Dashboard</a>
         <a href="../users/view_all_users.php">Users</a>
         <a href="view_all_products.php">Products</a>

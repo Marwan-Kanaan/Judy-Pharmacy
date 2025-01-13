@@ -15,7 +15,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $price = $_POST['price'];
     $category_id = $_POST['category'];
     $stock = $_POST['stock'];
-    $is_prescription_required = isset($_POST['is_prescription_required']) ? 1 : 0;
+
+    // Check if prescription is required
+    $is_prescription_required = isset($_POST['is_prescription_required']) && $_POST['is_prescription_required'] == '1' ? 1 : 0;
 
     // Handle file upload
     $targetDir = "../../images/products_uploads/";
@@ -163,6 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <!-- Sidebar -->
         <div class="sidebar">
             <h2>Admin Panel</h2>
+            <a href="../../index.php">Home</a>
             <a href="../dashboard.php">Dashboard</a>
             <a href="../users/view_all_users.php">Users</a>
             <a href="view_all_products.php">Products</a>
@@ -224,6 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </label>
                     </div>
                 </div>
+
                 <div class="form-group">
                     <label for="image">Product Image:</label>
                     <input type="file" id="image" name="image" accept="image/*" required>

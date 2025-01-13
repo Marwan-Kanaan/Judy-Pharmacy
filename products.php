@@ -2,6 +2,10 @@
 session_start();
 include 'includes/connection.php';
 
+
+$isLoggedIn = isset($_SESSION['user_id']);
+$userRole = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : null; // Get the user's role from the session
+
 // Fetch categories for the filter dropdown
 $categoriesSql = "SELECT id, name FROM categories";
 $categoriesResult = $conn->query($categoriesSql);
@@ -321,7 +325,7 @@ $isCustomerLoggedIn = isset($_SESSION['user_role']) && $_SESSION['user_role'] ==
         .product-container {
             display: flex;
             transition: transform 0.5s ease-in-out;
-            gap: 10px;
+            gap: 13px;
         }
 
         .product-card {
@@ -554,7 +558,21 @@ $isCustomerLoggedIn = isset($_SESSION['user_role']) && $_SESSION['user_role'] ==
                     <li><a href="about.php">About Us</a></li>
                     <li><a href="contact.php">Contact Us</a></li>
                     <li><a href="products.php" class="active">Products</a></li>
-                    <li><a href="login.php">Log In</a></li>
+
+                    <?php if ($isLoggedIn): ?>
+                        <?php if ($userRole === 'customer'): ?>
+                            <!-- Display 'Cart' and 'Profile' for customer role -->
+                            <li><a href="customer/cart.php">Cart</a></li>
+                            <li><a href="customer/profile.php">Profile</a></li>
+                            <?php elseif ($userRole === 'admin'): ?>
+                            <!-- Display admin-specific options -->
+                            <li><a href="admin/dashboard.php">Dashboard</a></li>
+                        <?php endif; ?>
+                        <li><a href="includes/logout.php">Log Out</a></li>
+                    <?php else: ?>
+                        <!-- Display 'Log In' if not logged in -->
+                        <li><a href="login.php">Log In</a></li>
+                    <?php endif; ?>
                 </ul>
             </nav>
         </header>
@@ -607,11 +625,14 @@ $isCustomerLoggedIn = isset($_SESSION['user_role']) && $_SESSION['user_role'] ==
                         <p>$<?php echo htmlspecialchars(number_format($row['price'], 2)); ?></p>
                         <div class="buttons">
                             <a href="product_details.php?id=<?php echo $row['id']; ?>" class="view-details">View Details</a>
+                            <?php if ($row['stock'] <= 0) : ?>
+                                    <span class="out-of-stock">Out of Stock</span>
+                                <?php endif; ?>
                             <?php if ($isCustomerLoggedIn) : ?>
                                 <?php if ($row['stock'] > 0) : ?>
-                                    <a href="add_to_cart.php?id=<?= $row['id'] ?>" class="add-to-cart">Add to Cart</a>
+                                    <a href="customer/add_to_cart.php?id=<?= $row['id'] ?>" class="add-to-cart">Add to Cart</a>
                                 <?php else : ?>
-                                    <span class="out-of-stock">Out of Stock</span>
+                                   
                                 <?php endif; ?>
                             <?php endif; ?>
                         </div>
@@ -635,11 +656,14 @@ $isCustomerLoggedIn = isset($_SESSION['user_role']) && $_SESSION['user_role'] ==
                         <p>$<?= number_format($bestSeller['price'], 2) ?></p>
                         <div class="buttons">
                             <a href="product_details.php?id=<?= $bestSeller['id'] ?>" class="view-details">View Details</a>
+                            <?php if ($bestSeller['stock'] <= 0) : ?>
+                                    <span class="out-of-stock">Out of Stock</span>
+                                <?php endif; ?>
                             <?php if ($isCustomerLoggedIn) : ?>
                                 <?php if ($bestSeller['stock'] > 0) : ?>
-                                    <a href="add_to_cart.php?id=<?= $bestSeller['id'] ?>" class="add-to-cart">Add to Cart</a>
+                                    <a href="customer/add_to_cart.php?id=<?= $bestSeller['id'] ?>" class="add-to-cart">Add to Cart</a>
                                 <?php else : ?>
-                                    <span class="out-of-stock">Out of Stock</span>
+                                    
                                 <?php endif; ?>
                             <?php endif; ?>
                         </div>
@@ -661,11 +685,14 @@ $isCustomerLoggedIn = isset($_SESSION['user_role']) && $_SESSION['user_role'] ==
                         <p>$<?= number_format($newItem['price'], 2) ?></p>
                         <div class="buttons">
                             <a href="product_details.php?id=<?= $newItem['id'] ?>" class="view-details">View Details</a>
+                            <?php if ($newItem['stock'] <= 0) : ?>
+                                    <span class="out-of-stock">Out of Stock</span>
+                                <?php endif; ?>
                             <?php if ($isCustomerLoggedIn) : ?>
                                 <?php if ($newItem['stock'] > 0) : ?>
-                                    <a href="add_to_cart.php?id=<?= $newItem['id'] ?>" class="add-to-cart">Add to Cart</a>
+                                    <a href="customer/add_to_cart.php?id=<?= $newItem['id'] ?>" class="add-to-cart">Add to Cart</a>
                                 <?php else : ?>
-                                    <span class="out-of-stock">Out of Stock</span>
+                                    
                                 <?php endif; ?>
                             <?php endif; ?>
 
@@ -685,13 +712,27 @@ $isCustomerLoggedIn = isset($_SESSION['user_role']) && $_SESSION['user_role'] ==
                 </div>
 
                 <nav class="footer-nav">
-                    <ul>
-                        <li><a href="index.php">Home</a></li>
-                        <li><a href="about.php">About Us</a></li>
-                        <li><a href="contact.php">Contact Us</a></li>
-                        <li><a href="products.php" class="active">Products</a></li>
+                <ul>
+                    <li><a href="index.php">Home</a></li>
+                    <li><a href="about.php">About Us</a></li>
+                    <li><a href="contact.php">Contact Us</a></li>
+                    <li><a href="products.php" class="active">Products</a></li>
+
+                    <?php if ($isLoggedIn): ?>
+                        <?php if ($userRole === 'customer'): ?>
+                            <!-- Display 'Cart' and 'Profile' for customer role -->
+                            <li><a href="customer/cart.php">Cart</a></li>
+                            <li><a href="customer/profile.php">Profile</a></li>
+                            <?php elseif ($userRole === 'admin'): ?>
+                            <!-- Display admin-specific options -->
+                            <li><a href="admin/dashboard.php">Dashboard</a></li>
+                        <?php endif; ?>
+                        <li><a href="includes/logout.php">Log Out</a></li>
+                    <?php else: ?>
+                        <!-- Display 'Log In' if not logged in -->
                         <li><a href="login.php">Log In</a></li>
-                    </ul>
+                    <?php endif; ?>
+                </ul>
                 </nav>
             </div>
             <div class="footer-rights">

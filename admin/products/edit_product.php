@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $price = $_POST['price'];
     $category_id = $_POST['category'];
     $stock = $_POST['stock'];
-    $is_prescription_required = isset($_POST['is_prescription_required']) ? 1 : 0;
+    $is_prescription_required = isset($_POST['is_prescription_required']) ? $_POST['is_prescription_required'] : 0;
 
     // Handle file upload (if a new image is uploaded)
     $imagePath = $product['image_path']; // Keep the old image by default
@@ -190,6 +190,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- Sidebar -->
         <div class="sidebar">
             <h2>Admin Panel</h2>
+            <a href="../../index.php">Home</a>
             <a href="../dashboard.php">Dashboard</a>
             <a href="../users/view_all_users.php">Users</a>
             <a href="view_all_products.php">Products</a>
@@ -240,10 +241,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label>Prescription Required:</label>
                     <div class="radio-group">
                         <label>
-                            <input type="radio" name="is_prescription_required" value="1" <?= $product['is_prescription_required'] ? 'checked' : '' ?>> Yes
+                            <input type="radio" name="is_prescription_required" value="1" <?= $product['is_prescription_required'] == 1 ? 'checked' : '' ?>> Yes
                         </label>
                         <label>
-                            <input type="radio" name="is_prescription_required" value="0" <?= !$product['is_prescription_required'] ? 'checked' : '' ?>> No
+                            <input type="radio" name="is_prescription_required" value="0" <?= $product['is_prescription_required'] == 0 ? 'checked' : '' ?>> No
                         </label>
                     </div>
                 </div>
