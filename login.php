@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
             $_SESSION['user_role'] = $user['role'];
 
             if ($user['role'] === 'customer') {
-                header("Location: customer/dashboard.php");
+                header("Location: index.php");
             } elseif ($user['role'] === 'pharmacist') {
                 header("Location: pharmacist/dashboard.php");
             } elseif ($user['role'] === 'admin') {

@@ -2,6 +2,13 @@
 session_start();
 include '../../includes/connection.php';
 
+// Check if user_id session exists and role is admin
+if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+    die('Access denied. Admin role required.');
+}
+
+$user_id = $_SESSION['user_id'];
+
 // Check if the `id` parameter is passed
 if (isset($_GET['id'])) {
     $productId = intval($_GET['id']); // Sanitize the input
@@ -49,4 +56,3 @@ if (isset($_GET['id'])) {
     header("Location: view_all_products.php");
     exit();
 }
-?>

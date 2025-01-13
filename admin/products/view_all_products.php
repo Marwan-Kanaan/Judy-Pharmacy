@@ -2,11 +2,12 @@
 session_start();
 include '../../includes/connection.php';
 
-// Check if admin is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../../login.php");
-    exit();
+// Check if user_id session exists and role is admin
+if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+    die('Access denied. Admin role required.');
 }
+
+$user_id = $_SESSION['user_id'];
 
 // Fetch categories for the filter
 $categoryQuery = "SELECT id, name FROM categories";
@@ -155,7 +156,8 @@ $conn->close(); // Close the connection
             width: 500%;
         }
 
-        .navbar select, .navbar input {
+        .navbar select,
+        .navbar input {
             background-color: #2c3e50;
             color: #ecf0f1;
             border: none;
@@ -176,12 +178,15 @@ $conn->close(); // Close the connection
         .search-btn:hover {
             background-color: #2980b9;
         }
-        
-        /* Content Area */
+
+        /* Updated Content Area */
         .content {
             flex: 1;
             padding: 20px;
             overflow-y: auto;
+            /* Enable scrolling for the content area */
+            height: calc(100vh - 60px);
+            /* Adjust for the height of the navbar */
         }
 
         .content h1 {
@@ -197,7 +202,7 @@ $conn->close(); // Close the connection
         .table th,
         .table td {
             border: 1px solid #ddd;
-            padding: 15px;
+            padding: 10px;
             text-align: left;
         }
 
@@ -258,6 +263,36 @@ $conn->close(); // Close the connection
 
         .add-product:hover {
             background-color: #27ae60;
+        }
+
+        /* Custom Scrollbar Style */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgb(140, 186, 211) #e0f7fa;
+            /* Blue scrollbar with light blue track */
+        }
+
+        *::-webkit-scrollbar {
+            width: 8px;
+            /* Width of the scrollbar */
+        }
+
+        *::-webkit-scrollbar-track {
+            background: rgb(255, 255, 255);
+            /* Light blue track background */
+        }
+
+        *::-webkit-scrollbar-thumb {
+            background-color: rgb(255, 255, 255);
+            /* Blue scrollbar handle */
+            border-radius: 4px;
+            border: 2px solidrgb(255, 255, 255);
+            /* Border for modern look */
+        }
+
+        *::-webkit-scrollbar-thumb:hover {
+            background-color: rgb(255, 255, 255);
+            /* Darker blue on hover */
         }
     </style>
     <script>

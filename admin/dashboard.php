@@ -4,9 +4,9 @@ session_start(); // Start the session to access logged-in user's data
 // Database connection
 include '../includes/connection.php';  // Ensure this includes your database connection
 
-// Check if user_id session exists
-if (!isset($_SESSION['user_id'])) {
-    die('Session user_id not set.');
+// Check if user_id session exists and role is admin
+if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+    die('Access denied. Admin role required.');
 }
 
 $user_id = $_SESSION['user_id'];
@@ -224,68 +224,68 @@ $conn->close();
 </head>
 
 <body>
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <h2><?php echo ucfirst($user['name']); ?> Panel</h2>
-    <a href="#">Dashboard</a>
-    <a href="users/view_all_users.php">Users</a>
-    <a href="products/view_all_products.php">Products</a>
-    <a href="#">Orders</a>
-    <a href="#">Prescriptions</a>
-    <a href="#">Settings</a>
-    <a href="../includes/logout.php">Log out</a>
-  </div>
-
-  <!-- Main Content -->
-  <div class="main">
-    <!-- Navbar -->
-    <div class="navbar">
-      <div class="profile">
-        <img src="<?php echo $user['image_path']; ?>" alt="Profile">
-        <span><?php echo ucfirst($user['name']); ?></span>
-      </div>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2><?php echo ucfirst($user['name']); ?> Panel</h2>
+        <a href="#">Dashboard</a>
+        <a href="users/view_all_users.php">Users</a>
+        <a href="products/view_all_products.php">Products</a>
+        <a href="#">Orders</a>
+        <a href="#">Prescriptions</a>
+        <a href="#">Settings</a>
+        <a href="../includes/logout.php">Log out</a>
     </div>
 
-    <!-- Content Area -->
-    <div class="content">
-      <h1>Welcome to the <?php echo ucfirst($user['name']); ?> Dashboard</h1>
-      <div class="stats">
-        <div class="card">
-          <h3>Total Users</h3>
-          <p><?php echo $total_users; ?></p>
+    <!-- Main Content -->
+    <div class="main">
+        <!-- Navbar -->
+        <div class="navbar">
+            <div class="profile">
+                <img src="<?php echo $user['image_path']; ?>" alt="Profile">
+                <span><?php echo ucfirst($user['name']); ?></span>
+            </div>
         </div>
-        <div class="card">
-          <h3>Total Products</h3>
-          <p><?php echo $total_products; ?></p>
-        </div>
-        <div class="card">
-          <h3>Total Orders</h3>
-          <p><?php echo $total_orders; ?></p>
-        </div>
-        <div class="card">
-          <h3>Total Prescriptions</h3>
-          <p><?php echo array_sum($prescription_status); ?></p>
-        </div>
-      </div>
 
-      <div class="charts">
-        <div class="chart-container">
-          <h3>Products by Category</h3>
-          <canvas id="productCategoriesChart"></canvas>
+        <!-- Content Area -->
+        <div class="content">
+            <h1>Welcome to the <?php echo ucfirst($user['name']); ?> Dashboard</h1>
+            <div class="stats">
+                <div class="card">
+                    <h3>Total Users</h3>
+                    <p><?php echo $total_users; ?></p>
+                </div>
+                <div class="card">
+                    <h3>Total Products</h3>
+                    <p><?php echo $total_products; ?></p>
+                </div>
+                <div class="card">
+                    <h3>Total Orders</h3>
+                    <p><?php echo $total_orders; ?></p>
+                </div>
+                <div class="card">
+                    <h3>Total Prescriptions</h3>
+                    <p><?php echo array_sum($prescription_status); ?></p>
+                </div>
+            </div>
+
+            <div class="charts">
+                <div class="chart-container">
+                    <h3>Products by Category</h3>
+                    <canvas id="productCategoriesChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Prescriptions by Status</h3>
+                    <canvas id="prescriptionStatusChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Monthly Orders</h3>
+                    <canvas id="monthlyOrdersChart"></canvas>
+                </div>
+            </div>
         </div>
-        <div class="chart-container">
-          <h3>Prescriptions by Status</h3>
-          <canvas id="prescriptionStatusChart"></canvas>
-        </div>
-        <div class="chart-container">
-          <h3>Monthly Orders</h3>
-          <canvas id="monthlyOrdersChart"></canvas>
-        </div>
-      </div>
     </div>
-  </div>
 
-  <script>
+    <script>
         // PHP data passed to JavaScript
         const productCategoriesData = <?php echo json_encode($product_categories); ?>;
         const prescriptionStatusData = <?php echo json_encode($prescription_status); ?>;
@@ -322,8 +322,8 @@ $conn->close();
             }
         });
 
-         // Monthly Orders Chart
-         const monthlyOrdersChartCtx = document.getElementById('monthlyOrdersChart').getContext('2d');
+        // Monthly Orders Chart
+        const monthlyOrdersChartCtx = document.getElementById('monthlyOrdersChart').getContext('2d');
         new Chart(monthlyOrdersChartCtx, {
             type: 'bar',
             data: {

@@ -2,11 +2,12 @@
 session_start();
 include '../../includes/connection.php';
 
-// Check if admin is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../../login.php");
-    exit();
+// Check if user_id session exists and role is admin
+if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+    die('Access denied. Admin role required.');
 }
+
+$user_id = $_SESSION['user_id'];
 
 // Pagination variables
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -153,7 +154,8 @@ $conn->close(); // Close the connection
             width: 500%;
         }
 
-        .navbar select, .navbar input {
+        .navbar select,
+        .navbar input {
             background-color: #2c3e50;
             color: #ecf0f1;
             border: none;
@@ -333,8 +335,8 @@ $conn->close(); // Close the connection
                         <td><?php echo ucfirst($user['country']); ?></td>
                         <td class="actions">
                             <a href="edit_user.php?id=<?php echo $user['id']; ?>" class="edit">Edit</a>
-                            <a href="delete_user.php?id=<?php echo $user['id']; 
-                            ?>">Delete</a>
+                            <a href="delete_user.php?id=<?php echo $user['id'];
+                                                        ?>">Delete</a>
                         </td>
                     </tr>
                 <?php } ?>
@@ -351,7 +353,7 @@ $conn->close(); // Close the connection
             </div>
         </div>
     </div>
-    
+
 </body>
 
 </html>

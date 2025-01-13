@@ -2,11 +2,12 @@
 session_start();
 include '../../includes/connection.php';
 
-// Check if admin is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../../login.php");
-    exit();
+// Check if user_id session exists and role is admin
+if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+    die('Access denied. Admin role required.');
 }
+
+$user_id = $_SESSION['user_id'];
 
 // Get product ID
 $product_id = isset($_GET['id']) ? intval($_GET['id']) : 0;

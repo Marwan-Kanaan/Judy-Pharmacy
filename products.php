@@ -13,7 +13,7 @@ $maxPrice = isset($_GET['max_price']) && $_GET['max_price'] !== '' ? (float)$_GE
 $categoryId = isset($_GET['category']) && $_GET['category'] != 0 ? (int)$_GET['category'] : null;
 
 // Build the product query with filters
-$filteredSql = "SELECT id, name, price, image_path FROM products WHERE 1";
+$filteredSql = "SELECT id, name, price, stock,image_path FROM products WHERE 1";
 
 // Apply search filter if provided
 if (!empty($searchQuery)) {
@@ -38,29 +38,62 @@ if ($categoryId !== null) {
 // Fetch filtered products
 $filteredResult = $conn->query($filteredSql);
 
-// Fetch best-seller products
+// Fetch filtered best-seller products
 $bestSellerSql = "
-    SELECT p.id, p.name, p.price, p.image_path, SUM(od.quantity) AS total_sold
+    SELECT p.id, p.name, p.price,p.stock , p.image_path, SUM(od.quantity) AS total_sold
     FROM products p
     JOIN order_details od ON p.id = od.product_id
     JOIN orders o ON od.order_id = o.id
+    WHERE 1";
+
+// Apply filters to Best Sellers
+if (!empty($searchQuery)) {
+    $bestSellerSql .= " AND p.name LIKE '%" . $conn->real_escape_string($searchQuery) . "%'";
+}
+if ($minPrice !== null) {
+    $bestSellerSql .= " AND p.price >= $minPrice";
+}
+if ($maxPrice !== null) {
+    $bestSellerSql .= " AND p.price <= $maxPrice";
+}
+if ($categoryId !== null) {
+    $bestSellerSql .= " AND p.category_id = $categoryId";
+}
+
+$bestSellerSql .= "
     GROUP BY p.id
     ORDER BY total_sold DESC
-    LIMIT 5";
+    ";
 $bestSellerResult = $conn->query($bestSellerSql);
 
-// Fetch new items (created within the last week)
+// Fetch filtered new arrival products
 $newItemsSql = "
-    SELECT id, name, price, image_path 
+    SELECT id, name, price, stock , image_path 
     FROM products 
-    WHERE created_at >= NOW() - INTERVAL 7 DAY
-    ORDER BY created_at DESC
-    LIMIT 5";
+    WHERE created_at >= NOW() - INTERVAL 7 DAY";
+
+// Apply filters to New Arrivals
+if (!empty($searchQuery)) {
+    $newItemsSql .= " AND name LIKE '%" . $conn->real_escape_string($searchQuery) . "%'";
+}
+if ($minPrice !== null) {
+    $newItemsSql .= " AND price >= $minPrice";
+}
+if ($maxPrice !== null) {
+    $newItemsSql .= " AND price <= $maxPrice";
+}
+if ($categoryId !== null) {
+    $newItemsSql .= " AND category_id = $categoryId";
+}
+
+$newItemsSql .= " ORDER BY created_at DESC ";
 $newItemsResult = $conn->query($newItemsSql);
 
 // Default products query if no filters are applied
-$defaultSql = "SELECT id, name, price, image_path FROM products LIMIT 12"; // Adjust limit as needed
+$defaultSql = "SELECT id, name, price, image_path FROM products "; // Adjust limit as needed
 $defaultResult = $conn->query($defaultSql);
+// Check if customer is logged in
+$isCustomerLoggedIn = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'customer';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -79,9 +112,9 @@ $defaultResult = $conn->query($defaultSql);
         }
 
         .container {
-            max-width: 1200px;
+            max-width: auto;
             margin: 0 auto;
-            padding: 20px;
+
         }
 
         header {
@@ -151,12 +184,13 @@ $defaultResult = $conn->query($defaultSql);
 
         .hero {
             background: url("images/static/backgrounds/productsback.jpg") center/cover no-repeat;
-            height: 80vh;
+            height: 70vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             color: rgb(245, 245, 245);
             padding-top: 18rem;
+            margin-top: 6rem;
             /* Adjusting padding for fixed navbar */
         }
 
@@ -177,12 +211,24 @@ $defaultResult = $conn->query($defaultSql);
         }
 
         .filter-row {
-            margin-bottom: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            /* Center horizontally */
+            margin-bottom: 50px;
+            margin-top: 20px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            /* Center items vertically */
+            justify-content: space-between;
+            /* Distribute space evenly */
             gap: 25px;
+            position: relative;
+            /* Allow positioning adjustments */
+            top: 50%;
+            /* Center vertically */
+
         }
+
 
         .filter-row input[type="text"],
         .filter-row input[type="number"],
@@ -242,52 +288,194 @@ $defaultResult = $conn->query($defaultSql);
             margin-bottom: 20px;
         }
 
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 50px;
-            margin-top: 10dvb;
+        .product-slideshow {
+            position: relative;
+            width: 100%;
+            height: 20rem;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            margin-top: 30px;
+        }
+
+        .product-slideshow-1 {
+            position: relative;
+            width: 100%;
+            height: 20rem;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            margin-top: 30px;
+        }
+
+        .product-slideshow-2 {
+            position: relative;
+            width: 100%;
+            height: 20rem;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            margin-top: 30px;
+        }
+
+        .product-container {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+            gap: 10px;
         }
 
         .product-card {
-            background-color: #fff;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex: 0 0 auto;
+            width: 250px;
             text-align: center;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .product-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
 
         .product-card img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 10px;
+            width: 100%;
+            height: 150px;
+            object-fit: contain;
         }
+
+        .slide-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 18px;
+            border-radius: 50%;
+            z-index: 10;
+        }
+
+        .slide-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .prev-btn {
+            left: 10px;
+        }
+
+        .next-btn {
+            right: 10px;
+        }
+
+        .slide-btn-1 {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 18px;
+            border-radius: 50%;
+            z-index: 10;
+        }
+
+        .slide-btn-1:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .prev-btn-1 {
+            left: 10px;
+        }
+
+        .next-btn-1 {
+            right: 10px;
+        }
+
+        .slide-btn-2 {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 18px;
+            border-radius: 50%;
+            z-index: 10;
+        }
+
+        .slide-btn-2:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .prev-btn-2 {
+            left: 10px;
+        }
+
+        .next-btn-2 {
+            right: 10px;
+        }
+
 
         .product-card h3 {
             font-size: 18px;
             margin: 10px 0;
+            color: #333;
         }
 
         .product-card p {
-            font-size: 16px;
-            color: #3498db;
-            font-weight: bold;
+            color: #777;
+            margin: 0 0 15px;
         }
 
-        .product-card button {
-            background-color: #3498db;
-            color: white;
-            padding: 10px 15px;
-            border: none;
+        .product-card .buttons {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+        }
+
+        .product-card .buttons a {
+            text-decoration: none;
+            padding: 8px 15px;
             border-radius: 5px;
-            cursor: pointer;
             font-size: 14px;
+            transition: background 0.3s, color 0.3s;
         }
 
-        .product-card button:hover {
-            background-color: #2980b9;
+        .product-card .buttons a.view-details {
+            background: #007bff;
+            color: white;
         }
+
+        .product-card .buttons a.view-details:hover {
+            background: #0056b3;
+        }
+
+        .product-card .buttons a.add-to-cart {
+            background: #28a745;
+            color: white;
+        }
+
+        .product-card .buttons a.add-to-cart:hover {
+            background: #1e7e34;
+        }
+
+        .out-of-stock {
+            color: red;
+            font-weight: bold;
+            margin-top: 8px;
+            margin-right: 4px;
+        }
+
 
         .actions {
             display: flex;
@@ -307,15 +495,13 @@ $defaultResult = $conn->query($defaultSql);
             color: #3498db;
         }
 
-        .product-section {
-            margin-bottom: 40px;
-        }
 
         footer {
             background-color: rgb(238, 237, 237);
             color: rgb(170, 170, 170);
             padding: 2rem 0;
             text-align: center;
+            width: 100%;
         }
 
         .footer-container {
@@ -375,10 +561,10 @@ $defaultResult = $conn->query($defaultSql);
     </section>
 
     <div class="container">
-      
-        
-               <!-- Filter Row -->
-               <div class="filter-row">
+
+
+        <!-- Filter Row -->
+        <div class="filter-row">
             <!-- Search Form -->
             <form method="GET" action="">
                 <input type="text" name="search" placeholder="Search products..." value="<?php echo htmlspecialchars($searchQuery); ?>">
@@ -407,79 +593,152 @@ $defaultResult = $conn->query($defaultSql);
         </div>
 
 
-        <h1>Our Products</h1>
 
-        <div class="product-grid">
-            <?php 
-            if (isset($_GET['search']) || isset($_GET['min_price']) || isset($_GET['max_price']) || isset($_GET['category'])) {
-                // Display filtered products
-                if ($filteredResult->num_rows > 0) {
-                    while ($row = $filteredResult->fetch_assoc()) { ?>
-                        <div class="product-card">
-                            <img src="<?php echo $row['image_path']; ?>" alt="Product Image">
-                            <h3><?php echo htmlspecialchars($row['name']); ?></h3>
-                            <p>$<?php echo number_format($row['price'], 2); ?></p>
-                        </div>
-                    <?php }
-                } else {
-                    echo "<p>No products found matching your criteria.</p>";
-                }
-            } else {
-                // Display default products
-                while ($row = $defaultResult->fetch_assoc()) { ?>
+        <h2 class="section-title">Our Products</h2>
+
+
+        <div class="product-slideshow">
+            <button class="slide-btn prev-btn">&#10094;</button>
+            <div class="product-container">
+                <?php while ($row = $filteredResult->fetch_assoc()) : ?>
                     <div class="product-card">
-                        <img src="<?php echo $row['image_path']; ?>" alt="Product Image">
+                        <img src="<?php echo htmlspecialchars($row['image_path']); ?>" alt="<?php echo htmlspecialchars($row['name']); ?>">
                         <h3><?php echo htmlspecialchars($row['name']); ?></h3>
-                        <p>$<?php echo number_format($row['price'], 2); ?></p>
+                        <p>$<?php echo htmlspecialchars(number_format($row['price'], 2)); ?></p>
+                        <div class="buttons">
+                            <a href="product_details.php?id=<?php echo $row['id']; ?>" class="view-details">View Details</a>
+                            <?php if ($isCustomerLoggedIn) : ?>
+                                <?php if ($row['stock'] > 0) : ?>
+                                    <a href="add_to_cart.php?id=<?= $row['id'] ?>" class="add-to-cart">Add to Cart</a>
+                                <?php else : ?>
+                                    <span class="out-of-stock">Out of Stock</span>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
                     </div>
-                <?php }
-            }
-            ?>
-        </div>
-
-        <h2>Best Sellers</h2>
-        <div class="product-grid">
-            <?php while ($row = $bestSellerResult->fetch_assoc()) { ?>
-                <div class="product-card">
-                    <img src="<?php echo $row['image_path']; ?>" alt="Best Seller Image">
-                    <h3><?php echo htmlspecialchars($row['name']); ?></h3>
-                    <p>$<?php echo number_format($row['price'], 2); ?></p>
-                </div>
-            <?php } ?>
-        </div>
-
-        <h2>New Arrivals</h2>
-        <div class="product-grid">
-            <?php while ($row = $newItemsResult->fetch_assoc()) { ?>
-                <div class="product-card">
-                    <img src="<?php echo $row['image_path']; ?>" alt="New Arrival Image">
-                    <h3><?php echo htmlspecialchars($row['name']); ?></h3>
-                    <p>$<?php echo number_format($row['price'], 2); ?></p>
-                </div>
-            <?php } ?>
-        </div>
-    </div>
-
-    <footer>
-        <div class="footer-container">
-            <div class="footer-logo">
-                <h1>Judy Pharmacy</h1>
+                <?php endwhile; ?>
             </div>
+            <button class="slide-btn next-btn">&#10095;</button>
+        </div>
+        </>
 
-            <nav class="footer-nav">
-                <ul>
-                    <li><a href="index.php">Home</a></li>
-                    <li><a href="about.php">About Us</a></li>
-                    <li><a href="contact.php">Contact Us</a></li>
-                    <li><a href="products.php" class="active">Products</a></li>
-                    <li><a href="login.php">Log In</a></li>
-                </ul>
-            </nav>
-        </div>
-        <div class="footer-rights">
-            <p>&copy; <?= date('Y') ?> Joudi Pharmacy. All Rights Reserved.</p>
-        </div>
-    </footer>
+
+        <h2 class="section-title">Best Sellers</h2>
+        <section class="product-slideshow-1">
+
+            <button class="slide-btn-1 prev-btn-1">&#10094;</button>
+            <div class="product-container">
+                <?php while ($bestSeller = $bestSellerResult->fetch_assoc()) { ?>
+                    <div class="product-card">
+                        <img src="<?= $bestSeller['image_path'] ?>" alt="<?= $bestSeller['name'] ?>">
+                        <h3><?= $bestSeller['name'] ?></h3>
+                        <p>$<?= number_format($bestSeller['price'], 2) ?></p>
+                        <div class="buttons">
+                            <a href="product_details.php?id=<?= $bestSeller['id'] ?>" class="view-details">View Details</a>
+                            <?php if ($isCustomerLoggedIn) : ?>
+                                <?php if ($bestSeller['stock'] > 0) : ?>
+                                    <a href="add_to_cart.php?id=<?= $bestSeller['id'] ?>" class="add-to-cart">Add to Cart</a>
+                                <?php else : ?>
+                                    <span class="out-of-stock">Out of Stock</span>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php } ?>
+            </div>
+            <button class="slide-btn-1 next-btn-1">&#10095;</button>
+        </section>
+
+        <h2 class="section-title">New Arrivals</h2>
+        <section class="product-slideshow-2">
+
+            <button class="slide-btn-2 prev-btn-2">&#10094;</button>
+            <div class="product-container">
+                <?php while ($newItem = $newItemsResult->fetch_assoc()) { ?>
+                    <div class="product-card">
+                        <img src="<?= $newItem['image_path'] ?>" alt="<?= $newItem['name'] ?>">
+                        <h3><?= $newItem['name'] ?></h3>
+                        <p>$<?= number_format($newItem['price'], 2) ?></p>
+                        <div class="buttons">
+                            <a href="product_details.php?id=<?= $newItem['id'] ?>" class="view-details">View Details</a>
+                            <?php if ($isCustomerLoggedIn) : ?>
+                                <?php if ($newItem['stock'] > 0) : ?>
+                                    <a href="add_to_cart.php?id=<?= $newItem['id'] ?>" class="add-to-cart">Add to Cart</a>
+                                <?php else : ?>
+                                    <span class="out-of-stock">Out of Stock</span>
+                                <?php endif; ?>
+                            <?php endif; ?>
+
+                        </div>
+                    </div>
+                <?php } ?>
+            </div>
+            <button class="slide-btn-2 next-btn-2">&#10095;</button>
+        </section>
+
+
+
+        <footer>
+            <div class="footer-container">
+                <div class="footer-logo">
+                    <h1>Judy Pharmacy</h1>
+                </div>
+
+                <nav class="footer-nav">
+                    <ul>
+                        <li><a href="index.php">Home</a></li>
+                        <li><a href="about.php">About Us</a></li>
+                        <li><a href="contact.php">Contact Us</a></li>
+                        <li><a href="products.php" class="active">Products</a></li>
+                        <li><a href="login.php">Log In</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="footer-rights">
+                <p>&copy; <?= date('Y') ?> Joudi Pharmacy. All Rights Reserved.</p>
+            </div>
+        </footer>
+
+        <script>
+            // Function to move the product slideshow
+            function slideShow(slideClass, direction) {
+                const slideContainers = document.querySelectorAll(slideClass);
+
+                slideContainers.forEach(slideContainer => {
+                    const productContainer = slideContainer.querySelector('.product-container');
+                    const productWidth = slideContainer.querySelector('.product-card').offsetWidth;
+                    const currentTransformValue = productContainer.style.transform.replace('translateX(', '').replace('px)', '') || 0;
+                    const newTransformValue = direction === 'next' ?
+                        (parseInt(currentTransformValue) - productWidth) + 'px' :
+                        (parseInt(currentTransformValue) + productWidth) + 'px';
+
+                    productContainer.style.transform = `translateX(${newTransformValue})`;
+                });
+            }
+
+            // Attach events to next and previous buttons foryy product sliders
+            document.querySelectorAll('.slide-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const direction = button.classList.contains('next-btn') ? 'next' : 'prev';
+                    slideShow('.product-slideshow', direction);
+                });
+            });
+
+            document.querySelectorAll('.slide-btn-1').forEach(button => {
+                button.addEventListener('click', () => {
+                    const direction = button.classList.contains('next-btn-1') ? 'next' : 'prev';
+                    slideShow('.product-slideshow-1', direction);
+                });
+            });
+
+            document.querySelectorAll('.slide-btn-2').forEach(button => {
+                button.addEventListener('click', () => {
+                    const direction = button.classList.contains('next-btn-2') ? 'next' : 'prev';
+                    slideShow('.product-slideshow-2', direction);
+                });
+            });
+        </script>
+
 
 </body>
 
