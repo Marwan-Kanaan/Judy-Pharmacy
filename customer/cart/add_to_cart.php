@@ -1,10 +1,10 @@
 <?php
 session_start();
-include('../includes/connection.php');
+include('../../includes/connection.php');
 
 // Ensure the user is logged in and is a customer
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'customer') {
-    header('Location: login.php');
+    header('Location: ../../login.php');
     exit();
 }
 

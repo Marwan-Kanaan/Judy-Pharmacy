@@ -17,7 +17,7 @@ $maxPrice = isset($_GET['max_price']) && $_GET['max_price'] !== '' ? (float)$_GE
 $categoryId = isset($_GET['category']) && $_GET['category'] != 0 ? (int)$_GET['category'] : null;
 
 // Build the product query with filters
-$filteredSql = "SELECT id, name, price, stock,image_path FROM products WHERE 1";
+$filteredSql = "SELECT id, name, price, stock,image_path, is_prescription_required FROM products WHERE 1";
 
 // Apply search filter if provided
 if (!empty($searchQuery)) {
@@ -44,7 +44,7 @@ $filteredResult = $conn->query($filteredSql);
 
 // Fetch filtered best-seller products
 $bestSellerSql = "
-    SELECT p.id, p.name, p.price,p.stock , p.image_path, SUM(od.quantity) AS total_sold
+    SELECT p.id, p.name, p.price,p.stock ,is_prescription_required, p.image_path, SUM(od.quantity) AS total_sold
     FROM products p
     JOIN order_details od ON p.id = od.product_id
     JOIN orders o ON od.order_id = o.id
@@ -66,13 +66,13 @@ if ($categoryId !== null) {
 
 $bestSellerSql .= "
     GROUP BY p.id
-    ORDER BY total_sold DESC
-    ";
+    HAVING total_sold > 30
+    ORDER BY total_sold DESC";
 $bestSellerResult = $conn->query($bestSellerSql);
 
 // Fetch filtered new arrival products
 $newItemsSql = "
-    SELECT id, name, price, stock , image_path 
+    SELECT id, name, price, stock ,is_prescription_required, image_path 
     FROM products 
     WHERE created_at >= NOW() - INTERVAL 7 DAY";
 
@@ -94,7 +94,7 @@ $newItemsSql .= " ORDER BY created_at DESC ";
 $newItemsResult = $conn->query($newItemsSql);
 
 // Default products query if no filters are applied
-$defaultSql = "SELECT id, name, price, image_path FROM products "; // Adjust limit as needed
+$defaultSql = "SELECT id, name, price, image_path, is_prescription_required FROM products "; // Adjust limit as needed
 $defaultResult = $conn->query($defaultSql);
 // Check if customer is logged in
 $isCustomerLoggedIn = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'customer';
@@ -295,7 +295,7 @@ $isCustomerLoggedIn = isset($_SESSION['user_role']) && $_SESSION['user_role'] ==
         .product-slideshow {
             position: relative;
             width: 100%;
-            height: 20rem;
+            height: 22rem;
             overflow: hidden;
             display: flex;
             align-items: center;
@@ -349,6 +349,21 @@ $isCustomerLoggedIn = isset($_SESSION['user_role']) && $_SESSION['user_role'] ==
             width: 100%;
             height: 150px;
             object-fit: contain;
+        }
+
+        .prescription-required {
+            background-color: red;
+            color: #ffffff;
+            padding: 6px;
+            font-size: 14px;
+            border-radius: 6px;
+            text-align: center;
+            align-items: center;
+            font-weight: bold;
+            display: inline-block;
+            margin-left: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .slide-btn {
@@ -562,9 +577,10 @@ $isCustomerLoggedIn = isset($_SESSION['user_role']) && $_SESSION['user_role'] ==
                     <?php if ($isLoggedIn): ?>
                         <?php if ($userRole === 'customer'): ?>
                             <!-- Display 'Cart' and 'Profile' for customer role -->
-                            <li><a href="customer/cart.php">Cart</a></li>
+                            <li><a href="customer/cart/cart.php">Cart</a></li>
                             <li><a href="customer/profile.php">Profile</a></li>
-                            <?php elseif ($userRole === 'admin'): ?>
+                            <li><a href="customer/prescriptions/prescriptions.php">Prescriptions</a></li>
+                        <?php elseif ($userRole === 'admin'): ?>
                             <!-- Display admin-specific options -->
                             <li><a href="admin/dashboard.php">Dashboard</a></li>
                         <?php endif; ?>
@@ -625,14 +641,20 @@ $isCustomerLoggedIn = isset($_SESSION['user_role']) && $_SESSION['user_role'] ==
                         <p>$<?php echo htmlspecialchars(number_format($row['price'], 2)); ?></p>
                         <div class="buttons">
                             <a href="product_details.php?id=<?php echo $row['id']; ?>" class="view-details">View Details</a>
+
                             <?php if ($row['stock'] <= 0) : ?>
-                                    <span class="out-of-stock">Out of Stock</span>
-                                <?php endif; ?>
+                                <span class="out-of-stock">Out of Stock</span>
+                            <?php endif; ?>
+
                             <?php if ($isCustomerLoggedIn) : ?>
                                 <?php if ($row['stock'] > 0) : ?>
-                                    <a href="customer/add_to_cart.php?id=<?= $row['id'] ?>" class="add-to-cart">Add to Cart</a>
+                                    <?php if ($row['is_prescription_required'] == 1) : ?>
+                                        <span class="prescription-required">Prescription Required</span>
+                                    <?php else : ?>
+                                        <a href="customer/cart/add_to_cart.php?id=<?= $row['id'] ?>" class="add-to-cart">Add to Cart</a>
+                                    <?php endif; ?>
                                 <?php else : ?>
-                                   
+                                    <!-- Optionally, add a disabled 'Add to Cart' button if out of stock -->
                                 <?php endif; ?>
                             <?php endif; ?>
                         </div>
@@ -641,7 +663,8 @@ $isCustomerLoggedIn = isset($_SESSION['user_role']) && $_SESSION['user_role'] ==
             </div>
             <button class="slide-btn next-btn">&#10095;</button>
         </div>
-        </>
+
+
 
 
         <h2 class="section-title">Best Sellers</h2>
@@ -657,13 +680,17 @@ $isCustomerLoggedIn = isset($_SESSION['user_role']) && $_SESSION['user_role'] ==
                         <div class="buttons">
                             <a href="product_details.php?id=<?= $bestSeller['id'] ?>" class="view-details">View Details</a>
                             <?php if ($bestSeller['stock'] <= 0) : ?>
-                                    <span class="out-of-stock">Out of Stock</span>
-                                <?php endif; ?>
+                                <span class="out-of-stock">Out of Stock</span>
+                            <?php endif; ?>
                             <?php if ($isCustomerLoggedIn) : ?>
                                 <?php if ($bestSeller['stock'] > 0) : ?>
-                                    <a href="customer/add_to_cart.php?id=<?= $bestSeller['id'] ?>" class="add-to-cart">Add to Cart</a>
+                                    <?php if ($bestSeller['is_prescription_required'] == 1) : ?>
+                                        <span class="prescription-required">Prescription Required</span>
+                                    <?php else : ?>
+                                        <a href="customer/cart/add_to_cart.php?id=<?= $bestSeller['id'] ?>" class="add-to-cart">Add to Cart</a>
+                                    <?php endif; ?>
                                 <?php else : ?>
-                                    
+                                    <!-- Optionally, add a disabled 'Add to Cart' button if out of stock -->
                                 <?php endif; ?>
                             <?php endif; ?>
                         </div>
@@ -686,16 +713,19 @@ $isCustomerLoggedIn = isset($_SESSION['user_role']) && $_SESSION['user_role'] ==
                         <div class="buttons">
                             <a href="product_details.php?id=<?= $newItem['id'] ?>" class="view-details">View Details</a>
                             <?php if ($newItem['stock'] <= 0) : ?>
-                                    <span class="out-of-stock">Out of Stock</span>
-                                <?php endif; ?>
+                                <span class="out-of-stock">Out of Stock</span>
+                            <?php endif; ?>
                             <?php if ($isCustomerLoggedIn) : ?>
                                 <?php if ($newItem['stock'] > 0) : ?>
-                                    <a href="customer/add_to_cart.php?id=<?= $newItem['id'] ?>" class="add-to-cart">Add to Cart</a>
+                                    <?php if ($newItem['is_prescription_required'] == 1) : ?>
+                                        <span class="prescription-required">Prescription Required</span>
+                                    <?php else : ?>
+                                        <a href="customer/cart/add_to_cart.php?id=<?= $newItem['id'] ?>" class="add-to-cart">Add to Cart</a>
+                                    <?php endif; ?>
                                 <?php else : ?>
-                                    
+                                    <!-- Optionally, add a disabled 'Add to Cart' button if out of stock -->
                                 <?php endif; ?>
                             <?php endif; ?>
-
                         </div>
                     </div>
                 <?php } ?>
@@ -712,27 +742,28 @@ $isCustomerLoggedIn = isset($_SESSION['user_role']) && $_SESSION['user_role'] ==
                 </div>
 
                 <nav class="footer-nav">
-                <ul>
-                    <li><a href="index.php">Home</a></li>
-                    <li><a href="about.php">About Us</a></li>
-                    <li><a href="contact.php">Contact Us</a></li>
-                    <li><a href="products.php" class="active">Products</a></li>
+                    <ul>
+                        <li><a href="index.php">Home</a></li>
+                        <li><a href="about.php">About Us</a></li>
+                        <li><a href="contact.php">Contact Us</a></li>
+                        <li><a href="products.php" class="active">Products</a></li>
 
-                    <?php if ($isLoggedIn): ?>
-                        <?php if ($userRole === 'customer'): ?>
-                            <!-- Display 'Cart' and 'Profile' for customer role -->
-                            <li><a href="customer/cart.php">Cart</a></li>
-                            <li><a href="customer/profile.php">Profile</a></li>
+                        <?php if ($isLoggedIn): ?>
+                            <?php if ($userRole === 'customer'): ?>
+                                <!-- Display 'Cart' and 'Profile' for customer role -->
+                                <li><a href="customer/cart/cart.php">Cart</a></li>
+                                <li><a href="customer/profile.php">Profile</a></li>
+                                <li><a href="customer/prescriptions/prescriptions.php">Prescriptions</a></li>
                             <?php elseif ($userRole === 'admin'): ?>
-                            <!-- Display admin-specific options -->
-                            <li><a href="admin/dashboard.php">Dashboard</a></li>
+                                <!-- Display admin-specific options -->
+                                <li><a href="admin/dashboard.php">Dashboard</a></li>
+                            <?php endif; ?>
+                            <li><a href="includes/logout.php">Log Out</a></li>
+                        <?php else: ?>
+                            <!-- Display 'Log In' if not logged in -->
+                            <li><a href="login.php">Log In</a></li>
                         <?php endif; ?>
-                        <li><a href="includes/logout.php">Log Out</a></li>
-                    <?php else: ?>
-                        <!-- Display 'Log In' if not logged in -->
-                        <li><a href="login.php">Log In</a></li>
-                    <?php endif; ?>
-                </ul>
+                    </ul>
                 </nav>
             </div>
             <div class="footer-rights">

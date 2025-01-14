@@ -1,10 +1,10 @@
 <?php
 session_start();
-include('../includes/connection.php');
+include('../../includes/connection.php');
 
 // Ensure the user is logged in and is a customer
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'customer') {
-    header('Location: login.php');
+    header('Location: ../../login.php');
     exit();
 }
 
@@ -110,7 +110,7 @@ $stmt->close();
 
     .cart-table th,
     .cart-table td {
-        padding: 15px;
+        padding: 25px;
         text-align: left;
         border-bottom: 1px solid #dbe4f0;
     }
@@ -128,7 +128,7 @@ $stmt->close();
     }
 
     .cart-table img {
-        width: 50px;
+        width: 40px;
         height: auto;
         border-radius: 5px;
     }
@@ -272,7 +272,7 @@ $stmt->close();
                     <tbody>
                         <?php foreach ($cart_items as $item): ?>
                             <tr>
-                                <td><img src="<?php echo $item['image_path']; ?>" alt="<?php echo $item['name']; ?>" width="50"> <?php echo $item['name']; ?></td>
+                                <td> <?php echo $item['name']; ?></td>
                                 <td>$<?php echo number_format($item['price'], 2); ?></td>
                                 <td>
                                     <input type="number" name="quantity" value="<?php echo $item['quantity']; ?>" min="1" max="99" class="quantity-input">
@@ -291,12 +291,12 @@ $stmt->close();
 
             <div class="cart-total">
                 <p><strong>Total Price: $<?php echo number_format($total_price, 2); ?></strong></p>
-                <a href="../products.php" class="back-button">Back to Products</a>
+                <a href="../../products.php" class="back-button">Back to Products</a>
                 <a href="checkout.php" class="checkout-button">Proceed to Checkout</a>
             </div>
 
         <?php else: ?>
-            <p>Your cart is empty. <a href="../products.php">Browse products</a> to add items to your cart.</p>
+            <p>Your cart is empty. <a href="../../products.php">Browse products</a> to add items to your cart.</p>
         <?php endif; ?>
 
     </div>

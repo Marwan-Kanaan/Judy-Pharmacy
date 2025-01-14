@@ -293,8 +293,9 @@ $userRole = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : null; // Ge
                     <?php if ($isLoggedIn): ?>
                         <?php if ($userRole === 'customer'): ?>
                             <!-- Display 'Cart' and 'Profile' for customer role -->
-                            <li><a href="customer/cart.php">Cart</a></li>
+                            <li><a href="customer/cart/cart.php">Cart</a></li>
                             <li><a href="customer/profile.php">Profile</a></li>
+                            <li><a href="customer/prescriptions/prescriptions.php">Prescriptions</a></li>
                             <?php elseif ($userRole === 'admin'): ?>
                             <!-- Display admin-specific options -->
                             <li><a href="admin/dashboard.php">Dashboard</a></li>
@@ -380,8 +381,9 @@ $userRole = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : null; // Ge
                     <?php if ($isLoggedIn): ?>
                         <?php if ($userRole === 'customer'): ?>
                             <!-- Display 'Cart' and 'Profile' for customer role -->
-                            <li><a href="customer/cart.php">Cart</a></li>
+                            <li><a href="customer/cart/cart.php">Cart</a></li>
                             <li><a href="customer/profile.php">Profile</a></li>
+                            <li><a href="customer/prescriptions/prescriptions.php">Prescriptions</a></li>
                             <?php elseif ($userRole === 'admin'): ?>
                             <!-- Display admin-specific options -->
                             <li><a href="admin/dashboard.php">Dashboard</a></li>
