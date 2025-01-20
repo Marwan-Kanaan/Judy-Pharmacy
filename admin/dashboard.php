@@ -45,16 +45,32 @@ while ($row = $prescription_status_query->fetch_assoc()) {
     $prescription_status[$row['status']] = $row['count'];
 }
 
-// Fetch monthly orders
 $monthly_orders_query = $conn->query("
-    SELECT MONTH(created_at) AS month, COUNT(*) AS count 
+    SELECT 
+        YEAR(created_at) AS year, 
+        MONTH(created_at) AS month, 
+        COUNT(*) AS count 
     FROM orders 
-    GROUP BY MONTH(created_at)
+    GROUP BY year, month
+    ORDER BY year, month
 ");
-$monthly_orders = array_fill(1, 12, 0); // Initialize months with 0
+
+$monthly_orders = [];
 while ($row = $monthly_orders_query->fetch_assoc()) {
-    $monthly_orders[(int)$row['month']] = (int)$row['count'];
+    $year = $row['year'];
+    $month = $row['month'];
+    $count = $row['count'];
+    $monthly_orders[$year][$month] = $count;
 }
+
+$chart_data = [];
+foreach ($monthly_orders as $year => $months) {
+    $chart_data[$year] = array_fill(1, 12, 0); // Fill all 12 months with 0
+    foreach ($months as $month => $count) {
+        $chart_data[$year][$month] = $count;
+    }
+}
+
 
 // Fetch statistics for dashboard
 $total_users_query = $conn->query("
@@ -102,7 +118,7 @@ $conn->close();
         .sidebar {
             background-color: #2c3e50;
             color: #ecf0f1;
-            width: 250px;
+            width: 238px;
             padding: 20px;
             display: flex;
             flex-direction: column;
@@ -231,7 +247,7 @@ $conn->close();
         <a href="dashboard.php">Dashboard</a>
         <a href="users/view_all_users.php">Users</a>
         <a href="products/view_all_products.php">Products</a>
-        <a href="#">Orders</a>
+        <a href="orders/view_all_orders.php">Orders</a>
         <a href="#">Prescriptions</a>
         <a href="#">Settings</a>
         <a href="../includes/logout.php">Log out</a>
@@ -281,6 +297,7 @@ $conn->close();
                 <div class="chart-container">
                     <h3>Monthly Orders</h3>
                     <canvas id="monthlyOrdersChart"></canvas>
+
                 </div>
             </div>
         </div>
@@ -290,6 +307,7 @@ $conn->close();
         // PHP data passed to JavaScript
         const productCategoriesData = <?php echo json_encode($product_categories); ?>;
         const prescriptionStatusData = <?php echo json_encode($prescription_status); ?>;
+       
 
         // Product Categories Chart
         const productCategoriesChartCtx = document.getElementById('productCategoriesChart').getContext('2d');
@@ -300,9 +318,7 @@ $conn->close();
                 datasets: [{
                     label: 'Products by Category',
                     data: Object.values(productCategoriesData),
-                    backgroundColor: [
-                        '#3498db', '#2ecc71', '#e74c3c', '#9b59b6', '#f1c40f'
-                    ],
+                    backgroundColor: ['#3498db', '#2ecc71', '#e74c3c', '#9b59b6', '#f1c40f'],
                 }]
             }
         });
@@ -316,35 +332,59 @@ $conn->close();
                 datasets: [{
                     label: 'Prescriptions by Status',
                     data: Object.values(prescriptionStatusData),
-                    backgroundColor: [
-                        '#3498db', '#2ecc71', '#e74c3c', '#9b59b6', '#f1c40f'
-                    ],
+                    backgroundColor: ['#3498db', '#2ecc71', '#e74c3c', '#9b59b6', '#f1c40f'],
                 }]
             }
         });
 
-        // Monthly Orders Chart
-        const monthlyOrdersChartCtx = document.getElementById('monthlyOrdersChart').getContext('2d');
-        new Chart(monthlyOrdersChartCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                datasets: [{
-                    label: 'Monthly Orders',
-                    data: monthlyOrdersData,
-                    backgroundColor: '#9b59b6',
-                    borderColor: '#8e44ad',
-                    borderWidth: 1,
-                }]
+        const monthlyOrdersData = <?php echo json_encode($chart_data); ?>;
+
+// Prepare the datasets dynamically for each year
+const datasets = Object.keys(monthlyOrdersData).map(year => ({
+    label: `Year ${year}`,
+    data: monthlyOrdersData[year],
+    backgroundColor: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.5)`, // Random colors
+    borderColor: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 1)`,
+    borderWidth: 1,
+}));
+
+// Create the chart
+const ctx = document.getElementById('monthlyOrdersChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        datasets: Object.keys(monthlyOrdersData).map(year => ({
+            label: `Year ${year}`,
+            data: Object.values(monthlyOrdersData[year]), // Array of 12 numbers
+            backgroundColor: `rgba(${Math.random() * 200}, ${Math.random() * 200}, ${Math.random() * 255}, 0.5)`,
+            borderColor: `rgba(${Math.random() * 200}, ${Math.random() * 200}, ${Math.random() * 255}, 1)`,
+            borderWidth: 1,
+        })),
+    },
+    options: {
+        responsive: true,
+        scales: {
+            x: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Months',
+                },
             },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Number of Orders',
+                },
+            },
+        },
+    },
+});
+
+
+
     </script>
 </body>
 

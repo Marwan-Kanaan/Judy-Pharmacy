@@ -4,6 +4,7 @@ include "../includes/connection.php"; // Include the database connection.
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['signup'])) {
     $name = mysqli_real_escape_string($conn, $_POST['name']);
     $email = mysqli_real_escape_string($conn, $_POST['email']);
+    $phone = mysqli_real_escape_string($conn, $_POST['phone']);
     $password = mysqli_real_escape_string($conn, $_POST['password']);
     $confirm_password = mysqli_real_escape_string($conn, $_POST['confirm_password']);
 
@@ -23,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['signup'])) {
         } else {
             // Insert the new customer into the database
             $role = 'customer';
-            $insert_query = "INSERT INTO users (name, email, password, role) VALUES ('$name', '$email', '$hashed_password', '$role')";
+            $insert_query = "INSERT INTO users (name, email, phone_number ,password, role) VALUES ('$name', '$email', '$phone', '$hashed_password', '$role')";
 
             if (mysqli_query($conn, $insert_query)) {
                 echo "<script>alert('Registration successful. You can now log in!');</script>";
@@ -143,6 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['signup'])) {
     <form action="" method="POST">
       <input type="text" name="name" placeholder="Full Name" required>
       <input type="email" name="email" placeholder="Email Address" required>
+      <input type="phone" name="phone" placeholder="Phone Number" required>
       <input type="password" name="password" placeholder="Password" required>
       <input type="password" name="confirm_password" placeholder="Confirm Password" required>
       <button type="submit" name="signup">Sign Up</button>

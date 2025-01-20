@@ -194,7 +194,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a href="../dashboard.php">Dashboard</a>
             <a href="../users/view_all_users.php">Users</a>
             <a href="view_all_products.php">Products</a>
-            <a href="../../orders/view_all.php">Orders</a>
+            <a href="../orders/view_all_orders.php">Orders</a>
             <a href="../../prescriptions/view_all.php">Prescriptions</a>
             <a href="../../settings.php">Settings</a>
             <a href="../../includes/logout.php">Log out</a>

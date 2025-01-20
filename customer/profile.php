@@ -178,11 +178,14 @@ $prescriptionStmt->close();
 
         .back-to-home {
             text-align: center;
+            margin-top: 15px;
             display: block;
-            margin-top: 20px;
-            font-size: 1.1em;
-            color: #5b9bd5;
+            padding: 8px 16px;
+            background: #007acc;
+            width: max-content;
+            color: white;
             text-decoration: none;
+            border-radius: 5px;
         }
 
         .back-to-home:hover {
@@ -235,19 +238,19 @@ $prescriptionStmt->close();
                             <td><?php echo ucfirst($order['status']); ?></td>
                             <td><?php echo date('F j, Y, g:i a', strtotime($order['created_at'])); ?></td>
                             <td>
-                                <?php 
-                                    $productNames = explode(',', $order['product_names']);
-                                    $quantities = explode(',', $order['quantities']);
-                                    $orderDetails = '';
-                                    
-                                    for ($i = 0; $i < count($productNames); $i++) {
-                                        $orderDetails .= $productNames[$i] . ' (x' . $quantities[$i] . ')';
-                                        if ($i < count($productNames) - 1) {
-                                            $orderDetails .= ', ';
-                                        }
-                                    }
+                                <?php
+                                $productNames = explode(',', $order['product_names']);
+                                $quantities = explode(',', $order['quantities']);
+                                $orderDetails = '';
 
-                                    echo $orderDetails;
+                                for ($i = 0; $i < count($productNames); $i++) {
+                                    $orderDetails .= $productNames[$i] . ' (x' . $quantities[$i] . ')';
+                                    if ($i < count($productNames) - 1) {
+                                        $orderDetails .= ', ';
+                                    }
+                                }
+
+                                echo $orderDetails;
                                 ?>
                             </td>
                         </tr>

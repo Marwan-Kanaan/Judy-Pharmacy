@@ -2,48 +2,36 @@
 session_start();
 include '../../includes/connection.php';
 
+
 // Check if user_id session exists and role is admin
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     die('Access denied. Admin role required.');
 }
 
-$user_id = $_SESSION['user_id'];
-
-// Fetch categories for the filter
-$categoryQuery = "SELECT id, name FROM categories";
-$categoryResult = $conn->query($categoryQuery);
-$categories = $categoryResult->fetch_all(MYSQLI_ASSOC);
-
 // Pagination variables
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$limit = 10; // Number of products per page
+$limit = 10; // Number of orders per page
 $offset = ($page - 1) * $limit;
 
 // Search filter
 $search = isset($_GET['search']) ? $_GET['search'] : '';
-$categoryFilter = isset($_GET['category']) ? (int)$_GET['category'] : 0;
 
-// Query to fetch products with category details
+// Query to fetch orders with customer details
 $sql = "SELECT 
-            p.*, 
-            c.name AS category_name, 
-            c.description AS category_description 
-        FROM products p
-        LEFT JOIN categories c ON p.category_id = c.id
+            o.*, 
+            u.name AS customer_name, 
+            u.email AS customer_email
+        FROM orders o
+        LEFT JOIN users u ON o.customer_id = u.id
         WHERE 1=1";
 $params = [];
 
 // Apply search filter
 if (!empty($search)) {
-    $sql .= " AND (p.name LIKE ? OR p.description LIKE ?)";
+    $sql .= " AND (o.id LIKE ? OR u.name LIKE ? OR u.email LIKE ?)";
     $params[] = "%$search%";
     $params[] = "%$search%";
-}
-
-// Apply category filter
-if ($categoryFilter > 0) {
-    $sql .= " AND p.category_id = ?";
-    $params[] = $categoryFilter;
+    $params[] = "%$search%";
 }
 
 // Pagination
@@ -57,40 +45,81 @@ $types = str_repeat('s', count($params) - 2) . "ii"; // Dynamic types: 's' for s
 $stmt->bind_param($types, ...$params);
 $stmt->execute();
 $result = $stmt->get_result();
-$products = $result->fetch_all(MYSQLI_ASSOC);
+$orders = $result->fetch_all(MYSQLI_ASSOC);
 
-// Count total products for pagination
-$totalProductsQuery = "SELECT COUNT(*) FROM products p WHERE 1=1";
-$totalProductsParams = [];
-$totalProductsTypes = '';
+// Count total orders for pagination
+$totalOrdersQuery = "SELECT COUNT(*) FROM orders o LEFT JOIN users u ON o.customer_id = u.id WHERE 1=1";
+$totalOrdersParams = [];
+$totalOrdersTypes = '';
 
 // Apply search filter for counting
 if (!empty($search)) {
-    $totalProductsQuery .= " AND (p.name LIKE ? OR p.description LIKE ?)";
-    $totalProductsParams[] = "%$search%";
-    $totalProductsParams[] = "%$search%";
-    $totalProductsTypes .= 'ss';
+    $totalOrdersQuery .= " AND (o.id LIKE ? OR u.name LIKE ? OR u.email LIKE ?)";
+    $totalOrdersParams[] = "%$search%";
+    $totalOrdersParams[] = "%$search%";
+    $totalOrdersParams[] = "%$search%";
+    $totalOrdersTypes .= 'sss';
 }
 
-// Apply category filter for counting
-if ($categoryFilter > 0) {
-    $totalProductsQuery .= " AND p.category_id = ?";
-    $totalProductsParams[] = $categoryFilter;
-    $totalProductsTypes .= 'i';
+$totalOrdersStmt = $conn->prepare($totalOrdersQuery);
+
+if (!empty($totalOrdersParams)) {
+    $totalOrdersStmt->bind_param($totalOrdersTypes, ...$totalOrdersParams);
 }
 
-$totalProductsStmt = $conn->prepare($totalProductsQuery);
+$totalOrdersStmt->execute();
+$totalOrdersResult = $totalOrdersStmt->get_result();
+$totalOrders = $totalOrdersResult->fetch_row()[0];
 
-if (!empty($totalProductsParams)) {
-    $totalProductsStmt->bind_param($totalProductsTypes, ...$totalProductsParams);
+// Handle the generation of the TXT file
+if (isset($_POST['generate_txt'])) {
+    // Fetch all orders without pagination to get all results
+    $sql = "SELECT 
+                o.*, 
+                u.name AS customer_name, 
+                u.email AS customer_email
+            FROM orders o
+            LEFT JOIN users u ON o.customer_id = u.id";
+    $result = $conn->query($sql);
+
+    $txtContent = "Order ID\tCustomer Name\tCustomer Email\tTotal Price\tOrder Date\tLast Update Date\tStatus\tItems\n";
+
+    // Loop through the orders and add them to the TXT content
+    while ($order = $result->fetch_assoc()) {
+        // Fetching the products for each order
+        $orderId = $order['id'];
+        $sql_items = "SELECT oi.*, p.name AS product_name FROM order_details oi
+                      JOIN products p ON oi.product_id = p.id
+                      WHERE oi.order_id = ?";
+        $stmt_items = $conn->prepare($sql_items);
+        $stmt_items->bind_param('i', $orderId);
+        $stmt_items->execute();
+        $result_items = $stmt_items->get_result();
+        $items = [];
+
+        while ($item = $result_items->fetch_assoc()) {
+            $items[] = $item['product_name'];
+        }
+
+        // Adding the order data to the TXT content
+        $txtContent .= $order['id'] . "\t" .
+            $order['customer_name'] . "\t" .
+            $order['customer_email'] . "\t" .
+            number_format($order['total_price'], 2) . "\t" .
+            date('d-m-Y', strtotime($order['created_at'])) . "\t" .
+            date('d-m-Y', strtotime($order['updated_at'])) . "\t" .
+            ucfirst($order['status']) . "\t" .
+            implode(", ", $items) . "\n";
+    }
+
+    // Set the headers for the download
+    header('Content-Type: text/plain');
+    header('Content-Disposition: attachment; filename="orders_report.txt"');
+    echo $txtContent;
+    exit; // Stop the script execution after the download starts
 }
-
-$totalProductsStmt->execute();
-$totalProductsResult = $totalProductsStmt->get_result();
-$totalProducts = $totalProductsResult->fetch_row()[0];
-
-$conn->close(); // Close the connection
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -98,7 +127,7 @@ $conn->close(); // Close the connection
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View All Products</title>
+    <title>View All Orders</title>
     <style>
         /* Reset and Base Styles */
         * {
@@ -220,9 +249,28 @@ $conn->close(); // Close the connection
             background-color: #e74c3c;
         }
 
+        .table .actions span.edit {
+            margin-right: 5px;
+            text-decoration: none;
+            color: #ecf0f1;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background-color: #e74c3c;
+        }
+
+        /* Style for the Edit link when disabled */
+        .table .actions span.edit-disabled {
+            color: gray;
+            text-decoration: none;
+            cursor: not-allowed;
+            background-color: #bdc3c7;
+            /* Lighter background color for disabled state */
+        }
+
         .table .actions a.edit {
             background-color: #3498db;
         }
+
 
         .table .actions a:hover {
             background-color: #34495e;
@@ -298,10 +346,8 @@ $conn->close(); // Close the connection
     <script>
         function updateURL() {
             let search = document.getElementById('search').value;
-            let category = document.getElementById('category').value;
             let url = new URL(window.location.href);
             url.searchParams.set('search', search);
-            url.searchParams.set('category', category);
             window.history.pushState({}, '', url);
             window.location.reload();
         }
@@ -315,8 +361,8 @@ $conn->close(); // Close the connection
         <a href="../../index.php">Home</a>
         <a href="../../admin/dashboard.php">Dashboard</a>
         <a href="../users/view_all_users.php">Users</a>
-        <a href="view_all_products.php">Products</a>
-        <a href="../orders/view_all_orders.php">Orders</a>
+        <a href="../products/view_all_products.php">Products</a>
+        <a href="view_all_orders.php">Orders</a>
         <a href="../../prescriptions/view_all.php">Prescriptions</a>
         <a href="../../settings.php">Settings</a>
         <a href="../../includes/logout.php">Log out</a>
@@ -327,64 +373,75 @@ $conn->close(); // Close the connection
         <!-- Navbar -->
         <div class="navbar">
             <div style="display: flex; gap: 10px;">
-                <input type="text" id="search" placeholder="Search by name or description..." value="<?php echo htmlspecialchars($search); ?>">
-                <select id="category">
-                    <option value="0">All Categories</option>
-                    <?php foreach ($categories as $category) { ?>
-                        <option value="<?php echo $category['id']; ?>" <?php echo $categoryFilter == $category['id'] ? 'selected' : ''; ?>>
-                            <?php echo htmlspecialchars($category['name']); ?>
-                        </option>
-                    <?php } ?>
-                </select>
+                <input type="text" id="search" placeholder="Search by order ID, customer name, or email..." value="<?php echo htmlspecialchars($search); ?>">
                 <button onclick="updateURL()" class="search-btn">Search</button>
             </div>
         </div>
 
         <!-- Content Area -->
         <div class="content">
-            <h1>View All Products</h1>
+            <h1>View All Orders</h1>
 
-            <!-- Add buttons -->
-            <div style="margin-bottom: 20px;">
-                <a href="add_product.php" class="add-product">Add Product</a>
-            </div>
+            <!-- Button to Generate TXT File -->
+            <form method="post">
+                <button type="submit" name="generate_txt" class="search-btn">Generate TXT</button>
+            </form>
+
 
             <table class="table">
                 <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Price</th>
-                    <th>Category Name</th>
-                    <th>Category Description</th>
-                    <th>Quantity</th>
-                    <th>Image</th>
-                    <th>Prescription Required</th>
+                    <th>Order ID</th>
+                    <th>Customer Name</th>
+                    <th>Customer Email</th>
+                    <th>Total Price</th>
+                    <th>Order Date</th>
+                    <th>Last update Date</th>
+                    <th>Status</th>
+                    <th>Items</th>
                     <th>Actions</th>
                 </tr>
-                <?php foreach ($products as $product) { ?>
+                <?php foreach ($orders as $order) {
+                    // Fetching the products for each order
+                    $orderId = $order['id'];
+                    $sql_items = "SELECT oi.*, p.name AS product_name, p.price AS product_price FROM order_details oi
+                                  JOIN products p ON oi.product_id = p.id
+                                  WHERE oi.order_id = ?";
+                    $stmt_items = $conn->prepare($sql_items);
+                    $stmt_items->bind_param('i', $orderId);
+                    $stmt_items->execute();
+                    $result_items = $stmt_items->get_result();
+                    $items = $result_items->fetch_all(MYSQLI_ASSOC);
+                ?>
                     <tr>
-                        <td><?php echo $product['id']; ?></td>
-                        <td><?php echo ucfirst($product['name']); ?></td>
-                        <td><?php echo $product['description']; ?></td>
-                        <td><?php echo number_format($product['price'], 2); ?></td>
-                        <td><?php echo ucfirst($product['category_name']); ?></td>
-                        <td><?php echo $product['category_description']; ?></td>
-                        <td><?php echo $product['stock']; ?></td>
+                        <td><?php echo $order['id']; ?></td>
+                        <td><?php echo ucfirst($order['customer_name']); ?></td>
+                        <td><?php echo $order['customer_email']; ?></td>
+                        <td><?php echo number_format($order['total_price'], 2); ?></td>
+                        <td><?php echo date('d-m-Y', strtotime($order['created_at'])); ?></td>
+                        <td><?php echo date('d-m-Y', strtotime($order['updated_at'])); ?></td>
+                        <td><?php echo ucfirst($order['status']); ?></td>
                         <td>
-                            <?php if (!empty($product['image_path'])) { ?>
-                                <img src="../../uploads/<?php echo $product['image_path']; ?>" alt="Product Image" style="width: 50px; height: 50px; object-fit: cover;">
-                            <?php } else { ?>
-                                No Image
-                            <?php } ?>
-                        </td>
-                        <td>
-                            <?php echo $product['is_prescription_required'] ? 'Yes' : 'No'; ?>
+                            <ul>
+                                <?php foreach ($items as $item) { ?>
+                                    <ol>
+                                        <?php echo $item['product_name']; ?> (x<?php echo $item['quantity']; ?>)
+                                        - $<?php echo number_format($item['product_price'], 2); ?>
+                                    </ol>
+                                <?php } ?>
+                            </ul>
                         </td>
                         <td class="actions">
-                            <a href="edit_product.php?id=<?php echo $product['id']; ?>" class="edit">Edit</a>
-                            <a href="delete_product.php?id=<?php echo $product['id']; ?>" class="delete">Delete</a>
+                            <!-- Check if the order status is neither 'completed' nor 'cancelled' before allowing editing -->
+                            <?php if ($order['status'] !== 'completed' && $order['status'] !== 'cancelled'): ?>
+                                <a href="edit_order.php?id=<?php echo $order['id']; ?>" class="edit">Edit</a>
+                            <?php else: ?>
+                                <span class="edit edit-disabled">Edit</span>
+                            <?php endif; ?>
                         </td>
+
+
+
+
                     </tr>
                 <?php } ?>
             </table>
@@ -392,9 +449,10 @@ $conn->close(); // Close the connection
             <!-- Pagination Links -->
             <div class="pagination">
                 <?php
-                $totalPages = ceil($totalProducts / $limit);
+                // Pagination logic (previous/next pages, etc.)
+                $totalPages = ceil($totalOrders / $limit);
                 for ($i = 1; $i <= $totalPages; $i++) {
-                    echo '<a href="?page=' . $i . ($search ? '&search=' . $search : '') . '">' . $i . '</a>';
+                    echo "<a href='view_all_orders.php?page=$i'>$i</a>";
                 }
                 ?>
             </div>

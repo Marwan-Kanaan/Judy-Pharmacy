@@ -274,6 +274,47 @@ $userRole = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : null; // Ge
         margin-top: 1rem;
         font-size: 0.9rem;
     }
+
+    /* Fade-in animation */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Scale animation for hover */
+    .card:hover {
+        transform: scale(1.05);
+        transition: transform 0.3s ease;
+    }
+
+    /* Fade-in for sections */
+    .fade-in {
+        opacity: 0;
+        animation: fadeIn 1s forwards;
+    }
+
+    .fade-in.visible {
+        opacity: 1;
+    }
+
+    /* Scroll-triggered slide-in effect */
+    .slide-in {
+        opacity: 0;
+        transform: translateX(-100px);
+        transition: all 1s ease;
+    }
+
+    .slide-in.visible {
+        opacity: 1;
+        transform: translateX(0);
+    }
 </style>
 
 <body>
@@ -296,7 +337,7 @@ $userRole = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : null; // Ge
                             <li><a href="customer/cart/cart.php">Cart</a></li>
                             <li><a href="customer/profile.php">Profile</a></li>
                             <li><a href="customer/prescriptions/prescriptions.php">Prescriptions</a></li>
-                            <?php elseif ($userRole === 'admin'): ?>
+                        <?php elseif ($userRole === 'admin'): ?>
                             <!-- Display admin-specific options -->
                             <li><a href="admin/dashboard.php">Dashboard</a></li>
                         <?php endif; ?>
@@ -312,20 +353,22 @@ $userRole = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : null; // Ge
 
     </section>
 
-    <section class="overview">
-        <div class="container">
-            <h2>Overview</h2>
-            <p>Welcome to Judy Pharmacy, A place that makes you feel better. Even if you’re not sick in the first place.</p>
-            <p>Established in 2016 with a modest 30 m2 space, Judy Pharmacy expanded to become one of the ISO certified pharmacies in Lebanon.</p>
+    <section class="fade-in">
+        <section class="overview">
+            <div class="container">
+                <h2>Overview</h2>
+                <p>Welcome to Judy Pharmacy, A place that makes you feel better. Even if you’re not sick in the first place.</p>
+                <p>Established in 2016 with a modest 30 m2 space, Judy Pharmacy expanded to become one of the ISO certified pharmacies in Lebanon.</p>
 
-            <p>Judy Mawlawi, PharmD, always believed that healthcare could offer an even more personalized experience and wanted to provide each visitor an exceptional level of care and attention. She trusts that a pharmacy should be “a place that makes you feel better, even if you’re not sick at the first place.”
-            </p>
-            <p>Navigating the academic journey as a college student in the pharmaceutical department isn’t a walk in the park. Juggling multiple assignments can be overwhelming. In these moments, seeking assistance from a ghostwriter masterarbeit can offer valuable support, ensuring timely submissions without compromising learning. Remember, while external help can aid, personal dedication and understanding are integral. Stay focused, manage time wisely, and seek guidance when needed to thrive in this challenging but rewarding academic path.
-            </p>
-            <p>At Judy Pharmacy, we do more than fulfilling prescriptions; we help our visitors achieving their health goals. The products we provide are offered together with clear guidance and professional advice. Our highly trained and knowledgeable pharmacists ensure that our visitors receive the highest level of quality service in a safe and friendly environment.
-            </p>
-            <p>Taking care of your wellbeing for the past 7 years, Judy Pharmacy is your reliable pharmacy offering great-value health products, without ever compromising quality.</p>
-        </div>
+                <p>Judy Mawlawi, PharmD, always believed that healthcare could offer an even more personalized experience and wanted to provide each visitor an exceptional level of care and attention. She trusts that a pharmacy should be “a place that makes you feel better, even if you’re not sick at the first place.”
+                </p>
+                <p>Navigating the academic journey as a college student in the pharmaceutical department isn’t a walk in the park. Juggling multiple assignments can be overwhelming. In these moments, seeking assistance from a ghostwriter masterarbeit can offer valuable support, ensuring timely submissions without compromising learning. Remember, while external help can aid, personal dedication and understanding are integral. Stay focused, manage time wisely, and seek guidance when needed to thrive in this challenging but rewarding academic path.
+                </p>
+                <p>At Judy Pharmacy, we do more than fulfilling prescriptions; we help our visitors achieving their health goals. The products we provide are offered together with clear guidance and professional advice. Our highly trained and knowledgeable pharmacists ensure that our visitors receive the highest level of quality service in a safe and friendly environment.
+                </p>
+                <p>Taking care of your wellbeing for the past 7 years, Judy Pharmacy is your reliable pharmacy offering great-value health products, without ever compromising quality.</p>
+            </div>
+        </section>
     </section>
 
 
@@ -348,19 +391,21 @@ $userRole = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : null; // Ge
         </div>
     </section>
 
-    <section class="about-overview">
-        <div class="overview-container">
-            <div class="overview-services">
-                <div class="overview-card">
-                    <h2>Our Vision</h2>
-                    <p>To become the most trusted and accessible pharmacy, providing exceptional care and innovative solutions to enhance health and well-being.</p>
-                </div>
-                <div class="overview-card">
-                    <h2>Our Mission</h2>
-                    <p>To deliver high-quality pharmaceutical products and personalized services with a focus on improving lives through reliable healthcare solutions.</p>
+    <section class="slide-in">
+        <section class="about-overview">
+            <div class="overview-container">
+                <div class="overview-services">
+                    <div class="overview-card">
+                        <h2>Our Vision</h2>
+                        <p>To become the most trusted and accessible pharmacy, providing exceptional care and innovative solutions to enhance health and well-being.</p>
+                    </div>
+                    <div class="overview-card">
+                        <h2>Our Mission</h2>
+                        <p>To deliver high-quality pharmaceutical products and personalized services with a focus on improving lives through reliable healthcare solutions.</p>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
     </section>
 
 
@@ -384,7 +429,7 @@ $userRole = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : null; // Ge
                             <li><a href="customer/cart/cart.php">Cart</a></li>
                             <li><a href="customer/profile.php">Profile</a></li>
                             <li><a href="customer/prescriptions/prescriptions.php">Prescriptions</a></li>
-                            <?php elseif ($userRole === 'admin'): ?>
+                        <?php elseif ($userRole === 'admin'): ?>
                             <!-- Display admin-specific options -->
                             <li><a href="admin/dashboard.php">Dashboard</a></li>
                         <?php elseif ($userRole === 'admin'): ?>
@@ -451,6 +496,40 @@ $userRole = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : null; // Ge
                 started = true;
                 startCounters();
             }
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // Counters Animation
+            const counters = document.querySelectorAll(".counter");
+            counters.forEach(counter => {
+                const updateCount = () => {
+                    const target = +counter.getAttribute("data-target");
+                    const count = +counter.innerText;
+
+                    const increment = target / 100; // Adjust speed
+                    if (count < target) {
+                        counter.innerText = Math.ceil(count + increment);
+                        setTimeout(updateCount, 30);
+                    } else {
+                        counter.innerText = target;
+                    }
+                };
+                updateCount();
+            });
+
+            // Scroll Animation
+            const fadeInElements = document.querySelectorAll(".fade-in, .slide-in");
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("visible");
+                    }
+                });
+            }, {
+                threshold: 0.1
+            });
+
+            fadeInElements.forEach(el => observer.observe(el));
         });
     </script>
 
