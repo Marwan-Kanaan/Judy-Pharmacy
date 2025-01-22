@@ -9,61 +9,64 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
 
 $user_id = $_SESSION['user_id'];
 
-if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['id'])) {
-    $userId = $_GET['id'];
+$userId = $_GET['id']; // Get the user ID from the URL
 
-    // Fetch user data
-    $sqlUser = "SELECT users.*, addresses.* FROM users
-                INNER JOIN addresses ON users.id = addresses.user_id
-                WHERE users.id = ?";
-    $stmtUser = $conn->prepare($sqlUser);
-    $stmtUser->bind_param("i", $userId);
-    $stmtUser->execute();
-    $resultUser = $stmtUser->get_result();
-    $user = $resultUser->fetch_assoc();
+// Fetch user data
+$sqlUser = "SELECT users.*, addresses.* FROM users
+            INNER JOIN addresses ON users.id = addresses.user_id
+            WHERE users.id = ?";
+$stmtUser = $conn->prepare($sqlUser);
+$stmtUser->bind_param("i", $userId);
+$stmtUser->execute();
+$resultUser = $stmtUser->get_result();
+$user = $resultUser->fetch_assoc();
 
-    if (!$user) {
-        header("Location: view_all_users.php");
-        exit();
-    }
-} else {
+if (!$user) {
     header("Location: view_all_users.php");
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $id = $_POST['id'];
-    $name = $_POST['name'];
-    $email = $_POST['email'];
-    $role = $_POST['role'];
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
+    $name = $conn->real_escape_string($_POST['name']);
+    $email = $conn->real_escape_string($_POST['email']);
+    $role = $conn->real_escape_string($_POST['role']);
 
     // Address data
-    $street = $_POST['street'];
-    $city = $_POST['city'];
-    $state = $_POST['state'];
-    $country = $_POST['country'];
+    $street = $conn->real_escape_string($_POST['street']);
+    $city = $conn->real_escape_string($_POST['city']);
+    $state = $conn->real_escape_string($_POST['state']);
+    $country = $conn->real_escape_string($_POST['country']);
 
-    $sqlUpdateAddress = "UPDATE addresses SET street = ?, city = ?, state = ?, country = ? WHERE user_id = ?";
-    $stmtUpdateAddress = $conn->prepare($sqlUpdateAddress);
-    $stmtUpdateAddress->bind_param("ssssi", $street, $city, $state, $country, $id);
-    $stmtUpdateAddress->execute();
-    // Update user
+    // Start transaction to ensure data consistency
+    $conn->begin_transaction();
 
+    try {
+        // Update user details
+        $sqlUpdateUser = "UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?";
+        $stmtUpdateUser = $conn->prepare($sqlUpdateUser);
+        $stmtUpdateUser->bind_param("sssi", $name, $email, $role, $userId);
+        $stmtUpdateUser->execute();
 
+        // Update address details
+        $sqlUpdateAddress = "UPDATE addresses SET street = ?, city = ?, state = ?, country = ? WHERE user_id = ?";
+        $stmtUpdateAddress = $conn->prepare($sqlUpdateAddress);
+        $stmtUpdateAddress->bind_param("ssssi", $street, $city, $state, $country, $userId);
+        $stmtUpdateAddress->execute();
 
-    // Update address
-    $sqlUpdateUser = "UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?";
-    $stmtUpdateUser = $conn->prepare($sqlUpdateUser);
-    $stmtUpdateUser->bind_param("sssi", $name, $email, $role, $id);
-    $stmtUpdateUser->execute();
+        // Commit the transaction
+        $conn->commit();
 
-    $error = "Failed to update user details.";
+        // Redirect or display success message
+        header("Location: view_all_users.php");
+        exit();
+    } catch (Exception $e) {
+        // Rollback the transaction in case of error
+        $conn->rollback();
+        $error = "Failed to update user details. Please try again.";
+    }
 } else {
     $error = "Invalid request method.";
 }
-
-// Close connections
-$conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -222,12 +225,9 @@ $conn->close();
                     <input type="text" id="country" name="country" value="<?php echo htmlspecialchars($user['country']); ?>" required>
                 </div>
 
-                <button type="submit">Update User</button>
+                <button type="submit" name="submit">Update User</button>
             </form>
 
-            <?php if (isset($error)) : ?>
-                <p style="color: red;"><?php echo $error; ?></p>
-            <?php endif; ?>
         </div>
     </div>
 </body>

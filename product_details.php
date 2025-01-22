@@ -275,6 +275,118 @@ if (isset($_GET['id'])) {
         .back-to-products:hover {
             background-color: #A8C686;
         }
+        /* Responsive Design */
+@media (max-width: 1200px) {
+    .product-detail {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 20px;
+    }
+
+    .product-detail img {
+        max-width: 80%;
+        height: auto;
+    }
+
+    .product-detail .info {
+        max-width: 90%;
+    }
+    
+}
+
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+
+    nav ul {
+        display: none;
+    }
+
+    .container {
+        padding: 10px;
+    }
+
+    .product-detail {
+        margin-top: 10rem;
+    }
+
+    .add-to-cart {
+        padding: 10px 20px;
+        font-size: 16px;
+    }
+
+    .footer-nav ul {
+            display: block;
+            /* Stack the items vertically */
+            gap: 1rem;
+            /* Adjust gap for better spacing */
+        }
+
+        .footer-nav ul li a {
+            font-size: 0.9rem;
+            /* Smaller font size for mobile */
+            padding: 0.5rem 0;
+            /* Add padding for better clickability */
+        }
+
+        .footer-copy {
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            /* Adjust the font size for smaller screens */
+        }
+}
+
+@media (max-width: 576px) {
+    .product-detail img {
+        max-width: 100%;
+    }
+
+    .product-detail .info {
+        max-width: 100%;
+        padding: 0 1rem;
+    }
+
+    .back-to-products {
+        width: 100%;
+        padding: 15px;
+        text-align: center;
+        font-size: 18px;
+    }
+
+    .add-to-cart {
+        width: 100%;
+        font-size: 18px;
+        padding: 15px;
+    }
+
+    nav ul {
+        display: none;
+    }
+    
+    .footer-nav ul {
+            display: block;
+            /* Stack the items vertically */
+            gap: 1rem;
+            /* Adjust gap for better spacing */
+        }
+
+        .footer-nav ul li a {
+            font-size: 0.9rem;
+            /* Smaller font size for mobile */
+            padding: 0.5rem 0;
+            /* Add padding for better clickability */
+        }
+
+        .footer-copy {
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            /* Adjust the font size for smaller screens */
+        }
+}
     </style>
 </head>
 
@@ -337,7 +449,7 @@ if (isset($_GET['id'])) {
                     <?php else: ?>
                         <!-- If the product does not require a prescription and is in stock -->
                         <?php if ($isLoggedIn && $userRole === 'customer'): ?>
-                            <a href="customer/add_to_cart.php?id=<?php echo $product['id']; ?>" class="add-to-cart">Add to Cart</a>
+                            <a href="customer/cart/add_to_cart.php?id=<?php echo $product['id']; ?>" class="add-to-cart">Add to Cart</a>
                         <?php else: ?>
                             <button disabled>Log in to Add to Cart</button>
                         <?php endif; ?>

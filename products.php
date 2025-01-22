@@ -108,454 +108,592 @@ $isCustomerLoggedIn = isset($_SESSION['user_role']) && $_SESSION['user_role'] ==
     <title>Products</title>
     <style>
         body {
-            font-family: "Roboto", sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: rgb(245, 245, 245);
-            /* Baby Blue Background */
-        }
-
-        .container {
-            max-width: auto;
-            margin: 0 auto;
-
-        }
-
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 97%;
-            padding: 1rem 2rem;
-            background-color: rgba(253, 253, 253, 1);
-            /* Transparent White */
-            color: rgb(117, 117, 117);
-            z-index: 1000;
-            display: flex;
-            justify-content: space-between;
-            /* Logo on left, Nav on right */
-            align-items: center;
-            box-shadow: 0 10px 10px rgba(0, 0, 0, 0.2);
-            /* Subtle shadow for effect */
-        }
-
-        .logo-image {
-            width: 130px;
-            /* Adjust the width as needed */
-            height: auto;
-            /* Maintain aspect ratio */
-            object-fit: f;
-            /* Ensure the image fits within the given dimensions */
-        }
-
-        nav ul {
-            list-style: none;
-            padding: 0;
-            font-size: large;
-            display: flex;
-            gap: 3rem;
-            /* Adjust spacing */
-        }
-
-        nav ul li a {
-            text-decoration: none;
-            color: rgb(117, 117, 117);
-            font-weight: bold;
-            transition: color 0.3s ease, transform 0.2s ease;
-        }
-
-        nav ul li a:hover {
-            color: #0288d1;
-            transform: scale(1.05);
-            /* Small scale effect */
-        }
-
-        nav ul li a.active {
-            color: #0277bd;
-            /* Change color to a specific color, e.g., blue */
-            font-weight: bold;
-            /* Make the active link bold */
-            text-decoration: none;
-            /* Add an underline effect */
-            transition: all 0.3s ease;
-        }
-
-        nav ul li a.active:hover {
-            color: #01579b;
-            /* A darker shade on hover */
-        }
-
-
-        .hero {
-            background: url("images/static/backgrounds/productsback.jpg") center/cover no-repeat;
-            height: 70vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            color: rgb(245, 245, 245);
-            padding-top: 18rem;
-            margin-top: 6rem;
-            /* Adjusting padding for fixed navbar */
-        }
-
-        .hero-content {
-            text-align: center;
-        }
-
-        .hero-content h2 {
-            font-size: 3rem;
-            /* Increased font size */
-            margin: 0 0 1rem;
-        }
-
-        .hero-content p {
-            font-size: 1.2rem;
-            /* Adjusted description font size */
-            margin-bottom: 2rem;
-        }
-
-        .filter-row {
-            max-width: 1200px;
-            margin: 0 auto;
-            /* Center horizontally */
-            margin-bottom: 50px;
-            margin-top: 20px;
-            display: flex;
-            align-items: center;
-            /* Center items vertically */
-            justify-content: space-between;
-            /* Distribute space evenly */
-            gap: 25px;
-            position: relative;
-            /* Allow positioning adjustments */
-            top: 50%;
-            /* Center vertically */
-
-        }
-
-
-        .filter-row input[type="text"],
-        .filter-row input[type="number"],
-        .filter-row select {
-            padding: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-
-        .filter-row button {
-            padding: 10px 15px;
-            background-color: #3498db;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .filter-row button:hover {
-            background-color: #2980b9;
-        }
-
-        /* Custom Scrollbar Style */
-        * {
-            scrollbar-width: thin;
-            scrollbar-color: rgb(140, 186, 211) #e0f7fa;
-            /* Blue scrollbar with light blue track */
-        }
-
-        *::-webkit-scrollbar {
-            width: 8px;
-            /* Width of the scrollbar */
-        }
-
-        *::-webkit-scrollbar-track {
-            background: rgb(255, 255, 255);
-            /* Light blue track background */
-        }
-
-        *::-webkit-scrollbar-thumb {
-            background-color: rgb(255, 255, 255);
-            /* Blue scrollbar handle */
-            border-radius: 4px;
-            border: 2px solidrgb(255, 255, 255);
-            /* Border for modern look */
-        }
-
-        *::-webkit-scrollbar-thumb:hover {
-            background-color: rgb(255, 255, 255);
-            /* Darker blue on hover */
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .product-slideshow {
-            position: relative;
-            width: 100%;
-            height: 22rem;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            margin-top: 30px;
-        }
-
-        .product-slideshow-1 {
-            position: relative;
-            width: 100%;
-            height: 20rem;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            margin-top: 30px;
-        }
-
-        .product-slideshow-2 {
-            position: relative;
-            width: 100%;
-            height: 20rem;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            margin-top: 30px;
-        }
-
-        .product-container {
-            display: flex;
-            transition: transform 0.5s ease-in-out;
-            gap: 13px;
-        }
-
-        .product-card {
-            flex: 0 0 auto;
-            width: 250px;
-            text-align: center;
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .product-card:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .product-card img {
-            width: 100%;
-            height: 150px;
-            object-fit: contain;
-        }
-
-        .prescription-required {
-            background-color: red;
-            color: #ffffff;
-            padding: 6px;
-            font-size: 14px;
-            border-radius: 6px;
-            text-align: center;
-            align-items: center;
-            font-weight: bold;
-            display: inline-block;
-            margin-left: 20px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .slide-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            font-size: 18px;
-            border-radius: 50%;
-            z-index: 10;
-        }
-
-        .slide-btn:hover {
-            background: rgba(0, 0, 0, 0.8);
-        }
-
-        .prev-btn {
-            left: 10px;
-        }
-
-        .next-btn {
-            right: 10px;
-        }
-
-        .slide-btn-1 {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            font-size: 18px;
-            border-radius: 50%;
-            z-index: 10;
-        }
-
-        .slide-btn-1:hover {
-            background: rgba(0, 0, 0, 0.8);
-        }
-
-        .prev-btn-1 {
-            left: 10px;
-        }
-
-        .next-btn-1 {
-            right: 10px;
-        }
-
-        .slide-btn-2 {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            font-size: 18px;
-            border-radius: 50%;
-            z-index: 10;
-        }
-
-        .slide-btn-2:hover {
-            background: rgba(0, 0, 0, 0.8);
-        }
-
-        .prev-btn-2 {
-            left: 10px;
-        }
-
-        .next-btn-2 {
-            right: 10px;
-        }
-
-
-        .product-card h3 {
-            font-size: 18px;
-            margin: 10px 0;
-            color: #333;
-        }
-
-        .product-card p {
-            color: #777;
-            margin: 0 0 15px;
-        }
-
-        .product-card .buttons {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px;
-        }
-
-        .product-card .buttons a {
-            text-decoration: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            font-size: 14px;
-            transition: background 0.3s, color 0.3s;
-        }
-
-        .product-card .buttons a.view-details {
-            background: #007bff;
-            color: white;
-        }
-
-        .product-card .buttons a.view-details:hover {
-            background: #0056b3;
-        }
-
-        .product-card .buttons a.add-to-cart {
-            background: #28a745;
-            color: white;
-        }
-
-        .product-card .buttons a.add-to-cart:hover {
-            background: #1e7e34;
-        }
-
-        .out-of-stock {
-            color: red;
-            font-weight: bold;
-            margin-top: 8px;
-            margin-right: 4px;
-        }
-
-
-        .actions {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 10px;
-        }
-
-        .actions a {
-            text-decoration: none;
-            color: white;
-        }
-
-        .section-title {
-            font-size: 24px;
-            margin: 20px 0;
-            text-align: center;
-            color: #3498db;
-        }
-
-
-        footer {
-            background-color: rgb(238, 237, 237);
-            color: rgb(170, 170, 170);
-            padding: 2rem 0;
-            text-align: center;
-            width: 100%;
-        }
-
-        .footer-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .footer-logo h1 {
-            margin: 0;
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-        }
-
-        .footer-nav ul {
-            list-style: none;
-            padding: 0;
-            display: flex;
-            gap: 1.5rem;
+    font-family: "Roboto", sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: rgb(245, 245, 245);
+    /* Baby Blue Background */
+}
+
+.container {
+    max-width: auto;
+    margin: 0 auto;
+}
+
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 97%;
+    padding: 1rem 2rem;
+    background-color: rgba(253, 253, 253, 1);
+    /* Transparent White */
+    color: rgb(117, 117, 117);
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    /* Logo on left, Nav on right */
+    align-items: center;
+    box-shadow: 0 10px 10px rgba(0, 0, 0, 0.2);
+    /* Subtle shadow for effect */
+}
+
+.logo-image {
+    width: 130px;
+    /* Adjust the width as needed */
+    height: auto;
+    /* Maintain aspect ratio */
+    object-fit: f;
+    /* Ensure the image fits within the given dimensions */
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    font-size: large;
+    display: flex;
+    gap: 3rem;
+    /* Adjust spacing */
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: rgb(117, 117, 117);
+    font-weight: bold;
+    transition: color 0.3s ease, transform 0.2s ease;
+}
+
+nav ul li a:hover {
+    color: #0288d1;
+    transform: scale(1.05);
+    /* Small scale effect */
+}
+
+nav ul li a.active {
+    color: #0277bd;
+    /* Change color to a specific color, e.g., blue */
+    font-weight: bold;
+    /* Make the active link bold */
+    text-decoration: none;
+    /* Add an underline effect */
+    transition: all 0.3s ease;
+}
+
+nav ul li a.active:hover {
+    color: #01579b;
+    /* A darker shade on hover */
+}
+
+.hero {
+    background: url("images/static/backgrounds/productsback.jpg") center/cover no-repeat;
+    height: 70vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: rgb(245, 245, 245);
+    padding-top: 18rem;
+    margin-top: 6rem;
+    /* Adjusting padding for fixed navbar */
+}
+
+.hero-content {
+    text-align: center;
+}
+
+.hero-content h2 {
+    font-size: 3rem;
+    /* Increased font size */
+    margin: 0 0 1rem;
+}
+
+.hero-content p {
+    font-size: 1.2rem;
+    /* Adjusted description font size */
+    margin-bottom: 2rem;
+}
+
+.filter-row {
+    max-width: 1200px;
+    margin: 0 auto;
+    /* Center horizontally */
+    margin-bottom: 50px;
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    /* Center items vertically */
+    justify-content: space-between;
+    /* Distribute space evenly */
+    gap: 25px;
+    position: relative;
+    /* Allow positioning adjustments */
+    top: 50%;
+    /* Center vertically */
+}
+
+.filter-row input[type="text"],
+.filter-row input[type="number"],
+.filter-row select {
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.filter-row button {
+    padding: 10px 15px;
+    background-color: #3498db;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.filter-row button:hover {
+    background-color: #2980b9;
+}
+
+/* Custom Scrollbar Style */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(140, 186, 211) #e0f7fa;
+    /* Blue scrollbar with light blue track */
+}
+
+*::-webkit-scrollbar {
+    width: 8px;
+    /* Width of the scrollbar */
+}
+
+*::-webkit-scrollbar-track {
+    background: rgb(255, 255, 255);
+    /* Light blue track background */
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: rgb(255, 255, 255);
+    /* Blue scrollbar handle */
+    border-radius: 4px;
+    border: 2px solidrgb(255, 255, 255);
+    /* Border for modern look */
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(255, 255, 255);
+    /* Darker blue on hover */
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.product-slideshow {
+    position: relative;
+    width: 100%;
+    height: 22rem;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    margin-top: 30px;
+}
+
+.product-slideshow-1 {
+    position: relative;
+    width: 100%;
+    height: 20rem;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    margin-top: 30px;
+}
+
+.product-slideshow-2 {
+    position: relative;
+    width: 100%;
+    height: 20rem;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    margin-top: 30px;
+}
+
+.product-container {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+    gap: 13px;
+}
+
+.product-card {
+    flex: 0 0 auto;
+    width: 250px;
+    text-align: center;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.product-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.product-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: contain;
+}
+
+.prescription-required {
+    background-color: red;
+    color: #ffffff;
+    padding: 6px;
+    font-size: 14px;
+    border-radius: 6px;
+    text-align: center;
+    align-items: center;
+    font-weight: bold;
+    display: inline-block;
+    margin-left: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.slide-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 18px;
+    border-radius: 50%;
+    z-index: 10;
+}
+
+.slide-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.prev-btn {
+    left: 10px;
+}
+
+.next-btn {
+    right: 10px;
+}
+
+.slide-btn-1 {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 18px;
+    border-radius: 50%;
+    z-index: 10;
+}
+
+.slide-btn-1:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.prev-btn-1 {
+    left: 10px;
+}
+
+.next-btn-1 {
+    right: 10px;
+}
+
+.slide-btn-2 {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 18px;
+    border-radius: 50%;
+    z-index: 10;
+}
+
+.slide-btn-2:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.prev-btn-2 {
+    left: 10px;
+}
+
+.next-btn-2 {
+    right: 10px;
+}
+
+.product-card h3 {
+    font-size: 18px;
+    margin: 10px 0;
+    color: #333;
+}
+
+.product-card p {
+    color: #777;
+    margin: 0 0 15px;
+}
+
+.product-card .buttons {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+}
+
+.product-card .buttons a {
+    text-decoration: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: background 0.3s, color 0.3s;
+}
+
+.product-card .buttons a.view-details {
+    background: #007bff;
+    color: white;
+}
+
+.product-card .buttons a.view-details:hover {
+    background: #0056b3;
+}
+
+.product-card .buttons a.add-to-cart {
+    background: #28a745;
+    color: white;
+}
+
+.product-card .buttons a.add-to-cart:hover {
+    background: #1e7e34;
+}
+
+.out-of-stock {
+    color: red;
+    font-weight: bold;
+    margin-top: 8px;
+    margin-right: 4px;
+}
+
+.actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.actions a {
+    text-decoration: none;
+    color: white;
+}
+
+.section-title {
+    font-size: 24px;
+    margin: 20px 0;
+    text-align: center;
+    color: #3498db;
+}
+
+footer {
+    background-color: rgb(238, 237, 237);
+    color: rgb(170, 170, 170);
+    padding: 2rem 0;
+    text-align: center;
+    width: 100%;
+}
+
+.footer-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.footer-logo h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+
+.footer-nav ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    gap: 1.5rem;
+}
+
+.footer-nav ul li a {
+    text-decoration: none;
+    color: rgb(117, 117, 117);
+    font-weight: bold;
+}
+
+.footer-nav ul li a:hover {
+    color: #0288d1;
+}
+
+.footer-copy {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    header {
+        padding: 1rem;
+    }
+
+    nav ul {
+       display: none;
+    }
+
+    .hero {
+        padding-top: 12rem;
+    }
+
+    .filter-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .filter-row input[type="text"],
+    .filter-row input[type="number"],
+    .filter-row select {
+        width: 100%;
+    }
+
+    .product-card {
+        width: 220px;
+    }
+
+    .product-container {
+        gap: 10px;
+    }
+
+    .footer-nav ul {
+            display: block;
+            /* Stack the items vertically */
+            gap: 1rem;
+            /* Adjust gap for better spacing */
         }
 
         .footer-nav ul li a {
-            text-decoration: none;
-            color: rgb(117, 117, 117);
-            font-weight: bold;
-        }
-
-        .footer-nav ul li a:hover {
-            color: #0288d1;
+            font-size: 0.9rem;
+            /* Smaller font size for mobile */
+            padding: 0.5rem 0;
+            /* Add padding for better clickability */
         }
 
         .footer-copy {
             margin-top: 1rem;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
+            /* Adjust the font size for smaller screens */
         }
+    
+}
+
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    nav ul {
+        display: none;
+    }
+
+    .hero {
+        padding-top: 8rem;
+        height: 50vh;
+    }
+
+    .filter-row {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .product-card {
+        width: 180px;
+    }
+
+    .product-container {
+        gap: 8px;
+    }
+
+    .footer-nav ul {
+            display: block;
+            /* Stack the items vertically */
+            gap: 1rem;
+            /* Adjust gap for better spacing */
+        }
+
+        .footer-nav ul li a {
+            font-size: 0.9rem;
+            /* Smaller font size for mobile */
+            padding: 0.5rem 0;
+            /* Add padding for better clickability */
+        }
+
+        .footer-copy {
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            /* Adjust the font size for smaller screens */
+        }
+    
+}
+
+@media (max-width: 480px) {
+    .logo-image {
+        width: 100px;
+    }
+
+    .hero-content h2 {
+        font-size: 2rem;
+    }
+
+    .hero-content p {
+        font-size: 1rem;
+    }
+
+    .product-card {
+        width: 160px;
+    }
+
+    .footer-nav ul {
+            display: block;
+            /* Stack the items vertically */
+            gap: 1rem;
+            /* Adjust gap for better spacing */
+        }
+
+        .footer-nav ul li a {
+            font-size: 0.9rem;
+            /* Smaller font size for mobile */
+            padding: 0.5rem 0;
+            /* Add padding for better clickability */
+        }
+
+        .footer-copy {
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            /* Adjust the font size for smaller screens */
+        }
+
+}
+
     </style>
 </head>
 

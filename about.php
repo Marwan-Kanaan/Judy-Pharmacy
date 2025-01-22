@@ -275,6 +275,54 @@ $userRole = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : null; // Ge
         font-size: 0.9rem;
     }
 
+    @media (max-width: 768px) {
+    nav ul {
+        display: none;
+    }
+
+    .footer-nav ul {
+            display: block;
+            /* Stack the items vertically */
+            gap: 1rem;
+            /* Adjust gap for better spacing */
+        }
+
+        .footer-nav ul li a {
+            font-size: 0.9rem;
+            /* Smaller font size for mobile */
+            padding: 0.5rem 0;
+            /* Add padding for better clickability */
+        }
+
+        .footer-copy {
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            /* Adjust the font size for smaller screens */
+        }
+
+    
+}
+
+@media (max-width: 576px) {
+    header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .logo-image {
+        width: 100px;
+    }
+
+    nav ul {
+        display: none;
+    }
+
+    .overview-card {
+        width: 100%;
+    }
+}
+
     /* Fade-in animation */
     @keyframes fadeIn {
         from {

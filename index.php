@@ -106,6 +106,18 @@ mysqli_close($conn);
         /* A darker shade on hover */
     }
 
+    /* Responsive Styles */
+    @media (max-width: 768px) {
+        nav ul {
+            display: none;
+            /* Hide the entire menu on small screens */
+        }
+
+        header {
+            justify-content: center;
+        }
+    }
+
 
     .hero {
         background: url("images/static/backgrounds/hero-image.jpg") center/cover no-repeat;
@@ -344,30 +356,6 @@ mysqli_close($conn);
         box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
     }
 
-    @media (max-width: 768px) {
-        .category-card {
-            width: 40%;
-            /* Adjust width for smaller screens */
-        }
-
-        .category-card img {
-            height: 80px;
-            /* Adjust image size for smaller screens */
-        }
-    }
-
-    @media (max-width: 480px) {
-        .category-card {
-            width: 80%;
-            /* Adjust width for very small screens */
-        }
-
-        .category-card img {
-            height: 60px;
-            /* Adjust image size for very small screens */
-        }
-    }
-
     .bmi-calculator {
         background-color: rgb(245, 245, 245);
         padding: 3rem 2rem;
@@ -483,22 +471,49 @@ mysqli_close($conn);
         padding: 0;
         display: flex;
         gap: 1.5rem;
+        flex-wrap: wrap;
+        /* Allow items to wrap on smaller screens */
+        justify-content: center;
+        /* Center the items */
     }
 
     .footer-nav ul li a {
         text-decoration: none;
         color: rgb(117, 117, 117);
         font-weight: bold;
+        font-size: 1rem;
+        /* Adjust font size for better readability */
+        margin: 0.5rem 0;
+        /* Add spacing between items */
     }
 
     .footer-nav ul li a:hover {
         color: #0288d1;
     }
 
-    .footer-copy {
-        margin-top: 1rem;
-        font-size: 0.9rem;
+    /* Responsive Styles */
+    @media (max-width: 768px) {
+        .footer-nav ul {
+            display: block;
+            /* Stack the items vertically */
+            gap: 1rem;
+            /* Adjust gap for better spacing */
+        }
+
+        .footer-nav ul li a {
+            font-size: 0.9rem;
+            /* Smaller font size for mobile */
+            padding: 0.5rem 0;
+            /* Add padding for better clickability */
+        }
+
+        .footer-copy {
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            /* Adjust the font size for smaller screens */
+        }
     }
+
 
     /* Animation Keyframes */
     @keyframes fadeIn {

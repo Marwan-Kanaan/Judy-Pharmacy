@@ -250,6 +250,66 @@ $stmt->close();
     .container p a:hover {
         text-decoration: underline;
     }
+
+    @media (max-width: 768px) {
+    .container {
+        width: 90%;
+        padding: 20px;
+    }
+
+    .cart-table th,
+    .cart-table td {
+        font-size: 14px;
+        padding: 15px;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .remove-button,
+    .update-button {
+        width: 100%;
+        font-size: 12px;
+    }
+
+    .cart-total {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 20px;
+    }
+
+    .cart-table th,
+    .cart-table td {
+        font-size: 12px;
+        padding: 8px;
+    }
+
+    .quantity-input {
+        width: 50px;
+    }
+
+    .remove-button,
+    .update-button {
+        font-size: 10px;
+        padding: 4px;
+    }
+
+    .checkout-button,
+    .back-button {
+        font-size: 12px;
+        padding: 8px;
+    }
+
+    .cart-total {
+        font-size: 14px;
+    }
+}
 </style>
 
 <body>
