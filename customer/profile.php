@@ -408,7 +408,8 @@ $prescriptionStmt->close();
                                 $current_time = time();
                                 $remaining_time = $created_at - $current_time;
 
-                                if ($remaining_time > 0): ?>
+                                // Check if the status is completed or the remaining time is less than or equal to 0
+                                if ($order['status'] !== 'completed' && $remaining_time > 0): ?>
                                     <input type="checkbox"
                                         name="order_action[]"
                                         value="<?php echo $order['id']; ?>"
@@ -418,6 +419,7 @@ $prescriptionStmt->close();
                                     N/A
                                 <?php endif; ?>
                             </td>
+
                         </tr>
                     <?php endwhile; ?>
                 </table>

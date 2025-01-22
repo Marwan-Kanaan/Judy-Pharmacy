@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'customer') {
 $user_id = $_SESSION['user_id'];
 
 // Fetch cart items for the logged-in user
-$sql = "SELECT c.id, p.name, p.price, c.quantity, p.image_path
+$sql = "SELECT c.id, p.name, p.price, c.quantity , p.is_prescription_required
         FROM cart c
         JOIN products p ON c.product_id = p.id
         WHERE c.customer_id = ?";
@@ -252,64 +252,64 @@ $stmt->close();
     }
 
     @media (max-width: 768px) {
-    .container {
-        width: 90%;
-        padding: 20px;
+        .container {
+            width: 90%;
+            padding: 20px;
+        }
+
+        .cart-table th,
+        .cart-table td {
+            font-size: 14px;
+            padding: 15px;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .remove-button,
+        .update-button {
+            width: 100%;
+            font-size: 12px;
+        }
+
+        .cart-total {
+            font-size: 16px;
+        }
     }
 
-    .cart-table th,
-    .cart-table td {
-        font-size: 14px;
-        padding: 15px;
-    }
+    @media (max-width: 480px) {
+        h1 {
+            font-size: 20px;
+        }
 
-    .action-buttons {
-        flex-direction: column;
-        gap: 5px;
-    }
+        .cart-table th,
+        .cart-table td {
+            font-size: 12px;
+            padding: 8px;
+        }
 
-    .remove-button,
-    .update-button {
-        width: 100%;
-        font-size: 12px;
-    }
+        .quantity-input {
+            width: 50px;
+        }
 
-    .cart-total {
-        font-size: 16px;
-    }
-}
+        .remove-button,
+        .update-button {
+            font-size: 10px;
+            padding: 4px;
+        }
 
-@media (max-width: 480px) {
-    h1 {
-        font-size: 20px;
-    }
+        .checkout-button,
+        .back-button {
+            font-size: 12px;
+            padding: 8px;
+        }
 
-    .cart-table th,
-    .cart-table td {
-        font-size: 12px;
-        padding: 8px;
+        .cart-total {
+            font-size: 14px;
+        }
     }
-
-    .quantity-input {
-        width: 50px;
-    }
-
-    .remove-button,
-    .update-button {
-        font-size: 10px;
-        padding: 4px;
-    }
-
-    .checkout-button,
-    .back-button {
-        font-size: 12px;
-        padding: 8px;
-    }
-
-    .cart-total {
-        font-size: 14px;
-    }
-}
 </style>
 
 <body>
@@ -335,9 +335,15 @@ $stmt->close();
                                 <td> <?php echo $item['name']; ?></td>
                                 <td>$<?php echo number_format($item['price'], 2); ?></td>
                                 <td>
-                                    <input type="number" name="quantity" value="<?php echo $item['quantity']; ?>" min="1" max="99" class="quantity-input">
-                                    <input type="hidden" name="cart_item_id" value="<?php echo $item['id']; ?>">
+                                    <?php if ($item['is_prescription_required']) : ?>
+                                        <input type="number" name="quantity" value="<?php echo $item['quantity']; ?>" min="1" max="99" class="quantity-input" readonly>
+                                        <span class="prescription-note">Prescription required</span>
+                                    <?php else : ?>
+                                        <input type="number" name="quantity" value="<?php echo $item['quantity']; ?>" min="1" max="99" class="quantity-input">
+                                        <input type="hidden" name="cart_item_id" value="<?php echo $item['id']; ?>">
+                                    <?php endif; ?>
                                 </td>
+
                                 <td>$<?php echo number_format($item['price'] * $item['quantity'], 2); ?></td>
                                 <td class="action-buttons">
                                     <a href="cart.php?remove=<?php echo $item['id']; ?>" class="remove-button">Remove</a>

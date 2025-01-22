@@ -7,98 +7,83 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
     die('Access denied. Admin role required.');
 }
 
-$user_id = $_SESSION['user_id'];
-
 // Pagination variables
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$limit = 10; // Number of users per page
+$limit = 10; // Number of prescriptions per page
 $offset = ($page - 1) * $limit;
 
 // Search and filter
 $search = isset($_GET['search']) ? $_GET['search'] : '';
-$role = isset($_GET['role']) ? $_GET['role'] : 'customer';
+$status = isset($_GET['status']) ? $_GET['status'] : '';
 
-// Query to fetch users with addresses
+// Base query to fetch prescriptions with grouped products
 $sql = "
-    SELECT u.id, u.name, u.email, u.role, a.street, a.city, a.state, a.country 
-    FROM users u
-    LEFT JOIN addresses a ON u.id = a.user_id
-    WHERE u.role != 'admin'
+    SELECT p.id, u.name AS customer_name, ph.name AS pharmacist_name, p.status, 
+           p.created_at, p.image, p.customer_id_image,
+           GROUP_CONCAT(prod.name SEPARATOR ', ') AS products
+    FROM prescriptions p
+    LEFT JOIN users u ON p.customer_id = u.id
+    LEFT JOIN users ph ON p.pharmacist_id = ph.id
+    LEFT JOIN prescription_items pi ON p.id = pi.prescription_id
+    LEFT JOIN products prod ON pi.product_id = prod.id
+    WHERE (p.id LIKE ? OR u.name LIKE ? OR prod.name LIKE ?)
 ";
-$params = [];
 
-// Apply search filter
-if (!empty($search)) {
-    $sql .= " AND (u.name LIKE ? OR u.email LIKE ? OR u.id LIKE ?)";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
+// Parameters for search
+$params = ["%$search%", "%$search%", "%$search%"];
+
+// Apply status filter
+if (!empty($status)) {
+    $sql .= " AND p.status = ?";
+    $params[] = $status;
 }
 
-// Apply role filter
-if (!empty($role)) {
-    $sql .= " AND u.role = ?";
-    $params[] = $role;
-}
-
-// Pagination
-$sql .= " LIMIT ? OFFSET ?";
+// Group by prescription ID and add pagination
+$sql .= " GROUP BY p.id LIMIT ? OFFSET ?";
 $params[] = $limit;
 $params[] = $offset;
 
 // Prepare and execute the query
 $stmt = $conn->prepare($sql);
-$types = str_repeat('s', count($params) - 2) . "ii"; // Dynamic types: 's' for strings, 'ii' for integers
-$stmt->bind_param($types, ...$params);
+$stmt->bind_param(str_repeat('s', count($params) - 2) . "ii", ...$params);
 $stmt->execute();
 $result = $stmt->get_result();
-$users = $result->fetch_all(MYSQLI_ASSOC);
+$prescriptions = $result->fetch_all(MYSQLI_ASSOC);
 
-// Count total users with addresses for pagination
-$totalUsersQuery = "
-    SELECT COUNT(*) 
-    FROM users u
-    LEFT JOIN addresses a ON u.id = a.user_id
-    WHERE u.role != 'admin'
+// Count total prescriptions for pagination
+$totalPrescriptionsQuery = "
+    SELECT COUNT(DISTINCT p.id) 
+    FROM prescriptions p
+    LEFT JOIN users u ON p.customer_id = u.id
+    LEFT JOIN prescription_items pi ON p.id = pi.prescription_id
+    LEFT JOIN products prod ON pi.product_id = prod.id
+    WHERE (p.id LIKE ? OR u.name LIKE ? OR prod.name LIKE ?)
 ";
-$countParams = [];
+$countParams = ["%$search%", "%$search%", "%$search%"];
 
-// Apply search filter
-if (!empty($search)) {
-    $totalUsersQuery .= " AND (u.name LIKE ? OR u.email LIKE ? OR u.id LIKE ?)";
-    $countParams[] = "%$search%";
-    $countParams[] = "%$search%";
-    $countParams[] = "%$search%";
+// Apply status filter for count
+if (!empty($status)) {
+    $totalPrescriptionsQuery .= " AND p.status = ?";
+    $countParams[] = $status;
 }
 
-// Apply role filter
-if (!empty($role)) {
-    $totalUsersQuery .= " AND u.role = ?";
-    $countParams[] = $role;
-}
-
-$totalUsersStmt = $conn->prepare($totalUsersQuery);
-
-if (!empty($countParams)) {
-    $countTypes = str_repeat('s', count($countParams));
-    $totalUsersStmt->bind_param($countTypes, ...$countParams);
-}
-
-$totalUsersStmt->execute();
-$totalUsersResult = $totalUsersStmt->get_result();
-$totalUsers = $totalUsersResult->fetch_row()[0];
+$totalPrescriptionsStmt = $conn->prepare($totalPrescriptionsQuery);
+$totalPrescriptionsStmt->bind_param(str_repeat('s', count($countParams)), ...$countParams);
+$totalPrescriptionsStmt->execute();
+$totalPrescriptionsResult = $totalPrescriptionsStmt->get_result();
+$totalPrescriptions = $totalPrescriptionsResult->fetch_row()[0];
 
 $conn->close(); // Close the connection
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View All Users</title>
+    <title>View All Prescriptions</title>
     <style>
-        /* Reset and Base Styles */
         * {
             margin: 0;
             padding: 0;
@@ -234,20 +219,23 @@ $conn->close(); // Close the connection
             background-color: #34495e;
         }
 
-        /* Buttons */
-        .add-user {
-            display: inline-block;
-            background-color: #2ecc71;
-            color: #ffffff;
-            padding: 10px 15px;
-            border-radius: 5px;
+
+        .table .actions span.disabled {
+            margin-right: 5px;
             text-decoration: none;
-            margin-right: 10px;
-            transition: background-color 0.3s;
+            color: #ecf0f1;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background-color: #e74c3c;
         }
 
-        .add-user:hover {
-            background-color: #27ae60;
+        /* Style for the Edit link when disabled */
+        .table .actions span.disabled {
+            color: gray;
+            text-decoration: none;
+            cursor: not-allowed;
+            background-color: #bdc3c7;
+            /* Lighter background color for disabled state */
         }
 
         .search-btn {
@@ -268,10 +256,10 @@ $conn->close(); // Close the connection
         // Function to update the URL and search
         function updateURL() {
             let search = document.getElementById('search').value;
-            let role = document.getElementById('role').value;
+            let status = document.getElementById('status').value;
             let url = new URL(window.location.href);
             url.searchParams.set('search', search);
-            url.searchParams.set('role', role);
+            url.searchParams.set('status', status);
             window.history.pushState({}, '', url);
             window.location.reload();
         }
@@ -284,10 +272,10 @@ $conn->close(); // Close the connection
         <h2>Admin Panel</h2>
         <a href="../../index.php">Home</a>
         <a href="../../admin/dashboard.php">Dashboard</a>
-        <a href="view_all_users.php">Users</a>
+        <a href="../users/view_all_users.php">Users</a>
         <a href="../products/view_all_products.php">Products</a>
         <a href="../orders/view_all_orders.php">Orders</a>
-        <a href="../prescriptions/view_all_prescriptions.php">Prescriptions</a>
+        <a href="view_all_prescriptions.php">Prescriptions</a>
         <a href="../contacts/view_all_contacts.php">Contacts</a>
         <a href="../../includes/logout.php">Log out</a>
     </div>
@@ -297,10 +285,12 @@ $conn->close(); // Close the connection
         <!-- Navbar -->
         <div class="navbar">
             <div style="display: flex; gap: 10px;">
-                <input type="text" id="search" placeholder="Search by name, email or ID..." value="<?php echo htmlspecialchars($search); ?>">
-                <select name="role" id="role">
-                    <option value="customer" <?php if ($role === 'customer') echo 'selected'; ?>>Customer</option>
-                    <option value="pharmacist" <?php if ($role === 'pharmacist') echo 'selected'; ?>>Pharmacist</option>
+                <input type="text" id="search" placeholder="Search by prescription ID, customer name, or product name..." value="<?php echo htmlspecialchars($search); ?>">
+                <select name="status" id="status">
+                    <option value="">All Statuses</option>
+                    <option value="pending" <?php if ($status === 'pending') echo 'selected'; ?>>Pending</option>
+                    <option value="approved" <?php if ($status === 'approved') echo 'selected'; ?>>Approved</option>
+                    <option value="rejected" <?php if ($status === 'rejected') echo 'selected'; ?>>Rejected</option>
                 </select>
                 <button class="search-btn" onclick="updateURL()">Search</button>
             </div>
@@ -308,40 +298,51 @@ $conn->close(); // Close the connection
 
         <!-- Content Area -->
         <div class="content">
-            <h1>View All Users</h1>
-
-            <!-- Add buttons -->
-            <div style="margin-bottom: 20px;">
-                <a href="add_user.php" class="add-user">Add User</a>
-            </div>
+            <h1>View All Prescriptions</h1>
 
             <table class="table">
                 <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Street</th>
-                    <th>City</th>
-                    <th>State</th>
-                    <th>Country</th>
+                    <th>Prescription ID</th>
+                    <th>Customer Name</th>
+                    <th>Products</th>
+                    <th>Pharmacist</th>
+                    <th>Status</th>
+                    <th>Created At</th>
+                    <th>Prescription Image</th>
+                    <th>Customer ID Image</th>
                     <th>Actions</th>
                 </tr>
-                <?php foreach ($users as $user) { ?>
+                <?php foreach ($prescriptions as $prescription) { ?>
                     <tr>
-                        <td><?php echo $user['id']; ?></td>
-                        <td><?php echo ucfirst($user['name']); ?></td>
-                        <td><?php echo $user['email']; ?></td>
-                        <td><?php echo ucfirst($user['role']); ?></td>
-                        <td><?php echo ucfirst($user['street']); ?></td>
-                        <td><?php echo ucfirst($user['city']); ?></td>
-                        <td><?php echo ucfirst($user['state']); ?></td>
-                        <td><?php echo ucfirst($user['country']); ?></td>
-                        <td class="actions">
-                            <a href="edit_user.php?id=<?php echo $user['id']; ?>" class="edit">Edit</a>
-                            <a href="delete_user.php?id=<?php echo $user['id'];
-                                                        ?>">Delete</a>
+                        <td><?php echo $prescription['id']; ?></td>
+                        <td><?php echo ucfirst($prescription['customer_name']); ?></td>
+                        <td><?php echo ucfirst($prescription['products']); ?></td>
+                        <td><?php echo ucfirst($prescription['pharmacist_name']); ?></td>
+                        <td><?php echo ucfirst($prescription['status']); ?></td>
+                        <td><?php echo $prescription['created_at']; ?></td>
+                        <td>
+                            <?php if (!empty($prescription['image'])) { ?>
+                                <a href="..\..\images\users_uploads\user_prescriptions\<?php echo $prescription['image']; ?>" target="_blank">View</a>
+                            <?php } else { ?>
+                                N/A
+                            <?php } ?>
                         </td>
+                        <td>
+                            <?php if (!empty($prescription['customer_id_image'])) { ?>
+                                <a href="..\..\images\users_uploads\user_id_photo\<?php echo $prescription['customer_id_image']; ?>" target="_blank">View</a>
+                            <?php } else { ?>
+                                N/A
+                            <?php } ?>
+                        </td>
+                        <td class="actions">
+                            <?php if ($prescription['status'] === 'pending') { ?>
+                                <a href="edit_prescription.php?id=<?php echo $prescription['id']; ?>" class="edit">Edit</a>
+                            <?php } else { ?>
+                                <span class="disabled">Edit</span>
+                            <?php } ?>
+                            <a href="delete_prescription.php?id=<?php echo $prescription['id']; ?>">Delete</a>
+                        </td>
+
                     </tr>
                 <?php } ?>
             </table>
@@ -349,9 +350,9 @@ $conn->close(); // Close the connection
             <!-- Pagination Links -->
             <div class="pagination">
                 <?php
-                $totalPages = ceil($totalUsers / $limit);
+                $totalPages = ceil($totalPrescriptions / $limit);
                 for ($i = 1; $i <= $totalPages; $i++) {
-                    echo '<a href="?page=' . $i . ($search ? '&search=' . $search : '') . ($role ? '&role=' . $role : '') . '">' . $i . '</a>';
+                    echo '<a href="?page=' . $i . ($search ? '&search=' . $search : '') . ($status ? '&status=' . $status : '') . '">' . $i . '</a>';
                 }
                 ?>
             </div>

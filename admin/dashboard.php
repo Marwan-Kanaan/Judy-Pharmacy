@@ -252,8 +252,8 @@ $conn->close();
         <a href="users/view_all_users.php">Users</a>
         <a href="products/view_all_products.php">Products</a>
         <a href="orders/view_all_orders.php">Orders</a>
-        <a href="#">Prescriptions</a>
-        <a href="#">Settings</a>
+        <a href="prescriptions/view_all_prescriptions.php">Prescriptions</a>
+        <a href="contacts/view_all_contacts.php">Contacts</a>
         <a href="../includes/logout.php">Log out</a>
     </div>
 
