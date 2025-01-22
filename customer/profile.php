@@ -43,11 +43,14 @@ $orderStmt->execute();
 $orderResult = $orderStmt->get_result();
 
 // Fetch user prescriptions
-$prescriptionSql = "SELECT p.id, p.product_id, p.created_at, p.status, p.image, pr.name AS product_name, ph.name AS pharmacist_name
+$prescriptionSql = "SELECT p.id, p.created_at, p.status, p.image, p.customer_id_image, pr.name AS product_name, pr.price AS product_price, ph.name AS pharmacist_name
                     FROM prescriptions p
-                    JOIN products pr ON p.product_id = pr.id
-                    JOIN users ph ON p.pharmacist_id = ph.id
+                    JOIN prescription_items pi ON p.id = pi.prescription_id
+                    JOIN products pr ON pi.product_id = pr.id
+                    LEFT JOIN users ph ON p.pharmacist_id = ph.id
                     WHERE p.customer_id = ?";
+
+
 
 $prescriptionStmt = $conn->prepare($prescriptionSql);
 $prescriptionStmt->bind_param("i", $user_id);
@@ -153,12 +156,13 @@ $prescriptionStmt->close();
         .table-container td {
             padding: 10px;
             border: 1px solid #ddd;
-            text-align: left;
+            text-align: center;
         }
 
         .table-container th {
             background-color: #5b9bd5;
             color: white;
+    
         }
 
         button {
@@ -260,47 +264,86 @@ $prescriptionStmt->close();
 
             <!-- Prescriptions Table -->
             <div class="table-container">
-                <h3>Your Prescriptions</h3>
-                <table>
-                    <tr>
-                        <th>Prescription ID</th>
-                        <th>Medication</th>
-                        <th>Product</th>
-                        <th>Pharmacist</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th>Image</th>
-                        <th>Download</th>
-                    </tr>
-                    <?php while ($prescription = $prescriptionResult->fetch_assoc()): ?>
-                        <tr>
-                            <td><?php echo $prescription['id']; ?></td>
-                            <td><?php echo $prescription['medication']; ?></td>
-                            <td><?php echo $prescription['product_name']; ?></td>
-                            <td><?php echo $prescription['pharmacist_name']; ?></td>
-                            <td><?php echo date('F j, Y', strtotime($prescription['created_at'])); ?></td>
-                            <td><?php echo ucfirst($prescription['status']); ?></td>
-                            <td>
-                                <?php if (!empty($prescription['image_path'])): ?>
-                                    <img src="<?php echo $prescription['image_path']; ?>" alt="Prescription Image" width="100" height="100">
-                                <?php else: ?>
-                                    No image available
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <?php if (!empty($prescription['image_path'])): ?>
-                                    <a href="<?php echo $prescription['image_path']; ?>" download>
-                                        <button>Download</button>
-                                    </a>
-                                <?php else: ?>
-                                    No image to download
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endwhile; ?>
-                </table>
-            </div>
+    <h3>Your Prescriptions</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Prescription ID</th>
+                <th>Products</th>
+                <th>Pharmacist</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Prescription Image</th>
+                <th>Download</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            // Initialize an array to keep track of the prescription IDs we've already processed
+            $processed_prescriptions = [];
 
+            // Loop through the fetched prescriptions
+            while ($prescription = $prescriptionResult->fetch_assoc()) {
+                $prescription_id = $prescription['id'];
+
+                // Check if the prescription has already been processed (to avoid duplicate rows)
+                if (!in_array($prescription_id, $processed_prescriptions)) {
+                    // Display the prescription row
+                    echo '<tr>';
+                    echo '<td>' . $prescription['id'] . '</td>';
+
+                    // Fetch and display all products associated with the prescription
+                    echo '<td>';
+                    $products_sql = "
+                        SELECT pr.name AS product_name
+                        FROM prescription_items pi
+                        JOIN products pr ON pi.product_id = pr.id
+                        WHERE pi.prescription_id = ?
+                    ";
+                    $product_stmt = $conn->prepare($products_sql);
+                    $product_stmt->bind_param("i", $prescription_id);
+                    $product_stmt->execute();
+                    $product_result = $product_stmt->get_result();
+
+                    // Display products for this prescription
+                    $product_names = [];
+                    while ($product = $product_result->fetch_assoc()) {
+                        $product_names[] = $product['product_name'];
+                    }
+                    echo implode(', ', $product_names);  // Display products in the same row
+                    echo '</td>';
+
+                    echo '<td>' . $prescription['pharmacist_name'] . '</td>';
+                    echo '<td>' . date('F j, Y', strtotime($prescription['created_at'])) . '</td>';
+                    echo '<td>' . ucfirst($prescription['status']) . '</td>';
+                    echo '<td>';
+                    if (!empty($prescription['image'])) {
+                        // Make sure the image path is relative to the joudi_pharmacy directory
+                        $image_path = "../images/users_uploads/user_prescriptions/" . $prescription['image'];
+                        echo '<img src="' . $image_path . '" alt="Prescription Image" width="100" height="100">';
+                    } else {
+                        echo 'No image available';
+                    }
+                    echo '</td>';
+                    echo '<td>';
+                    if (!empty($prescription['image'])) {
+                        // Download link should also be relative to the joudi_pharmacy directory
+                        $download_path = "../images/users_uploads/user_prescriptions/" . $prescription['image'];
+                        echo '<a href="' . $download_path . '" download><button>Download</button></a>';
+                    } else {
+                        echo 'No image to download';
+                    }
+                    echo '</td>';
+                    echo '</tr>';
+
+                    // Mark this prescription as processed
+                    $processed_prescriptions[] = $prescription_id;
+                }
+            }
+            ?>
+        </tbody>
+    </table>
+</div>
             <a href="../index.php" class="back-to-home">Back to Home</a>
         </div>
     </div>

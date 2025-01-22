@@ -215,15 +215,18 @@ $conn->close();
             flex-wrap: wrap;
             gap: 20px;
             margin-top: 30px;
+            
         }
 
         .chart-container {
-            flex: 1 1 30%;
+            flex: 1 1 25%;
             min-width: 300px;
             background-color: #fff;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            justify-content: center;
+            align-items: center;
         }
 
         .chart-container h3 {
@@ -231,6 +234,7 @@ $conn->close();
             margin-bottom: 15px;
             color: #2c3e50;
         }
+
 
         canvas {
             max-width: 100%;
@@ -307,7 +311,7 @@ $conn->close();
         // PHP data passed to JavaScript
         const productCategoriesData = <?php echo json_encode($product_categories); ?>;
         const prescriptionStatusData = <?php echo json_encode($prescription_status); ?>;
-       
+
 
         // Product Categories Chart
         const productCategoriesChartCtx = document.getElementById('productCategoriesChart').getContext('2d');
@@ -339,52 +343,49 @@ $conn->close();
 
         const monthlyOrdersData = <?php echo json_encode($chart_data); ?>;
 
-// Prepare the datasets dynamically for each year
-const datasets = Object.keys(monthlyOrdersData).map(year => ({
-    label: `Year ${year}`,
-    data: monthlyOrdersData[year],
-    backgroundColor: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.5)`, // Random colors
-    borderColor: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 1)`,
-    borderWidth: 1,
-}));
-
-// Create the chart
-const ctx = document.getElementById('monthlyOrdersChart').getContext('2d');
-new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-        datasets: Object.keys(monthlyOrdersData).map(year => ({
+        // Prepare the datasets dynamically for each year
+        const datasets = Object.keys(monthlyOrdersData).map(year => ({
             label: `Year ${year}`,
-            data: Object.values(monthlyOrdersData[year]), // Array of 12 numbers
-            backgroundColor: `rgba(${Math.random() * 200}, ${Math.random() * 200}, ${Math.random() * 255}, 0.5)`,
-            borderColor: `rgba(${Math.random() * 200}, ${Math.random() * 200}, ${Math.random() * 255}, 1)`,
+            data: monthlyOrdersData[year],
+            backgroundColor: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.5)`, // Random colors
+            borderColor: `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 1)`,
             borderWidth: 1,
-        })),
-    },
-    options: {
-        responsive: true,
-        scales: {
-            x: {
-                beginAtZero: true,
-                title: {
-                    display: true,
-                    text: 'Months',
+        }));
+
+        // Create the chart
+        const ctx = document.getElementById('monthlyOrdersChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: Object.keys(monthlyOrdersData).map(year => ({
+                    label: `Year ${year}`,
+                    data: Object.values(monthlyOrdersData[year]), // Array of 12 numbers
+                    backgroundColor: `rgba(${Math.random() * 200}, ${Math.random() * 200}, ${Math.random() * 255}, 0.5)`,
+                    borderColor: `rgba(${Math.random() * 200}, ${Math.random() * 200}, ${Math.random() * 255}, 1)`,
+                    borderWidth: 1,
+                })),
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Months',
+                        },
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Orders',
+                        },
+                    },
                 },
             },
-            y: {
-                beginAtZero: true,
-                title: {
-                    display: true,
-                    text: 'Number of Orders',
-                },
-            },
-        },
-    },
-});
-
-
-
+        });
     </script>
 </body>
 

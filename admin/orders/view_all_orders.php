@@ -34,6 +34,28 @@ if (!empty($search)) {
     $params[] = "%$search%";
 }
 
+// Add a query to get the sum of total price for completed orders
+$totalCompletedQuery = "SELECT SUM(o.total_price) FROM orders o
+                        LEFT JOIN users u ON o.customer_id = u.id
+                        WHERE o.status = 'completed'";
+
+// Apply search filter for counting completed orders
+if (!empty($search)) {
+    $totalCompletedQuery .= " AND (o.id LIKE ? OR u.name LIKE ? OR u.email LIKE ?)";
+    $totalOrdersParams[] = "%$search%";
+    $totalOrdersParams[] = "%$search%";
+    $totalOrdersParams[] = "%$search%";
+    $totalOrdersTypes .= 'sss';
+}
+
+$totalCompletedStmt = $conn->prepare($totalCompletedQuery);
+if (!empty($totalOrdersParams)) {
+    $totalCompletedStmt->bind_param($totalOrdersTypes, ...$totalOrdersParams);
+}
+$totalCompletedStmt->execute();
+$totalCompletedResult = $totalCompletedStmt->get_result();
+$totalCompletedPrice = $totalCompletedResult->fetch_row()[0] ?? 0;
+
 // Pagination
 $sql .= " LIMIT ? OFFSET ?";
 $params[] = $limit;
@@ -438,12 +460,19 @@ if (isset($_POST['generate_txt'])) {
                                 <span class="edit edit-disabled">Edit</span>
                             <?php endif; ?>
                         </td>
-
-
-
-
                     </tr>
+                    <!-- Add the total completed price below the table -->
+
+
                 <?php } ?>
+                <!-- Add the total completed price below the table -->
+                <tr>
+                    <td colspan="7" style="text-align: right; font-weight: bold;">Total Price for Completed Orders: </td>
+                    <td colspan="2" style="text-align: right; font-weight: bold;">
+                        <?php echo number_format($totalCompletedPrice, 2); ?>
+                    </td>
+                </tr>
+
             </table>
 
             <!-- Pagination Links -->
