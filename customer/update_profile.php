@@ -10,21 +10,39 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'customer') {
 
 $user_id = $_SESSION['user_id'];
 
-// Fetch current user details
-$userSql = "SELECT u.name, u.email, u.phone_number, a.street, a.city, a.state, a.country, u.image_path
-            FROM users u
-            JOIN addresses a ON u.id = a.user_id
-            WHERE u.id = ?";
-$stmt = $conn->prepare($userSql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$userResult = $stmt->get_result();
+// Fetch user details from the users table
+$userSql = "SELECT name, email, phone_number, image_path FROM users WHERE id = ?";
+$userStmt = $conn->prepare($userSql);
+$userStmt->bind_param("i", $user_id);
+$userStmt->execute();
+$userResult = $userStmt->get_result();
 
 if ($userResult->num_rows > 0) {
     $userDetails = $userResult->fetch_assoc();
 } else {
     echo "User not found!";
     exit();
+}
+
+// Fetch address details from the addresses table
+$addressSql = "SELECT street, city, state, country FROM addresses WHERE user_id = ?";
+$addressStmt = $conn->prepare($addressSql);
+$addressStmt->bind_param("i", $user_id);
+$addressStmt->execute();
+$addressResult = $addressStmt->get_result();
+
+if ($addressResult->num_rows > 0) {
+    $addressDetails = $addressResult->fetch_assoc();
+    $addressExists = true;
+} else {
+    // No address found
+    $addressDetails = [
+        'street' => null,
+        'city' => null,
+        'state' => null,
+        'country' => null,
+    ];
+    $addressExists = false;
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -69,10 +87,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->bind_param("ssssi", $name, $email, $phone_number, $imagePath, $user_id);
         $stmt->execute();
 
-        // Update address details
-        $updateAddressSql = "UPDATE addresses SET street = ?, city = ?, state = ?, country = ? WHERE user_id = ?";
-        $stmt = $conn->prepare($updateAddressSql);
-        $stmt->bind_param("ssssi", $street, $city, $state, $country, $user_id);
+        // Insert or update address details
+        if ($addressExists) {
+            $updateAddressSql = "UPDATE addresses SET street = ?, city = ?, state = ?, country = ? WHERE user_id = ?";
+            $stmt = $conn->prepare($updateAddressSql);
+            $stmt->bind_param("ssssi", $street, $city, $state, $country, $user_id);
+        } else {
+            $insertAddressSql = "INSERT INTO addresses (street, city, state, country, user_id) VALUES (?, ?, ?, ?, ?)";
+            $stmt = $conn->prepare($insertAddressSql);
+            $stmt->bind_param("ssssi", $street, $city, $state, $country, $user_id);
+        }
         $stmt->execute();
 
         header('location: profile.php');
@@ -80,8 +104,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-$stmt->close();
+$addressStmt->close();
+$userStmt->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -189,16 +215,16 @@ $stmt->close();
                 <input type="text" id="phone_number" name="phone_number" value="<?php echo $userDetails['phone_number']; ?>" required>
 
                 <label for="street">Street</label>
-                <input type="text" id="street" name="street" value="<?php echo $userDetails['street']; ?>" required>
+                <input type="text" id="street" name="street" value="<?php echo $addressDetails['street']; ?>" required>
 
                 <label for="city">City</label>
-                <input type="text" id="city" name="city" value="<?php echo $userDetails['city']; ?>" required>
+                <input type="text" id="city" name="city" value="<?php echo $addressDetails['city']; ?>" required>
 
                 <label for="state">State</label>
-                <input type="text" id="state" name="state" value="<?php echo $userDetails['state']; ?>" required>
+                <input type="text" id="state" name="state" value="<?php echo $addressDetails['state']; ?>" required>
 
                 <label for="country">Country</label>
-                <input type="text" id="country" name="country" value="<?php echo $userDetails['country']; ?>" required>
+                <input type="text" id="country" name="country" value="<?php echo $addressDetails['country']; ?>" required>
 
                 <label for="user_photo">Profile Photo</label>
                 <input type="file" id="user_photo" name="user_photo" accept="image/*">

@@ -11,14 +11,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'customer') {
 $user_id = $_SESSION['user_id'];
 
 // Fetch user details from the users table
-$userSql = "SELECT u.name, u.email, u.phone_number, a.street, a.city, a.state, a.country, u.image_path
-            FROM users u
-            JOIN addresses a ON u.id = a.user_id
-            WHERE u.id = ?";
-$stmt = $conn->prepare($userSql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$userResult = $stmt->get_result();
+$userSql = "SELECT name, email, phone_number, image_path FROM users WHERE id = ?";
+$userStmt = $conn->prepare($userSql);
+$userStmt->bind_param("i", $user_id);
+$userStmt->execute();
+$userResult = $userStmt->get_result();
 
 if ($userResult->num_rows > 0) {
     $userDetails = $userResult->fetch_assoc();
@@ -26,6 +23,26 @@ if ($userResult->num_rows > 0) {
     echo "User not found!";
     exit();
 }
+
+// Fetch address details from the addresses table
+$addressSql = "SELECT street, city, state, country FROM addresses WHERE user_id = ?";
+$addressStmt = $conn->prepare($addressSql);
+$addressStmt->bind_param("i", $user_id);
+$addressStmt->execute();
+$addressResult = $addressStmt->get_result();
+
+if ($addressResult->num_rows > 0) {
+    $addressDetails = $addressResult->fetch_assoc();
+} else {
+    // If no address is found, set defaults or handle accordingly
+    $addressDetails = [
+        'street' => null,
+        'city' => null,
+        'state' => null,
+        'country' => null,
+    ];
+}
+
 
 // Fetch user orders with order details and quantities, grouped by order ID
 $orderSql = "SELECT o.id, o.total_price, o.status, o.created_at, 
@@ -57,7 +74,7 @@ $prescriptionStmt->bind_param("i", $user_id);
 $prescriptionStmt->execute();
 $prescriptionResult = $prescriptionStmt->get_result();
 
-$stmt->close();
+
 $orderStmt->close();
 $prescriptionStmt->close();
 ?>
@@ -195,6 +212,36 @@ $prescriptionStmt->close();
         .back-to-home:hover {
             text-decoration: underline;
         }
+
+        /* Custom Scrollbar Style */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: rgb(140, 186, 211) #e0f7fa;
+        /* Blue scrollbar with light blue track */
+    }
+
+    *::-webkit-scrollbar {
+        width: 8px;
+        /* Width of the scrollbar */
+    }
+
+    *::-webkit-scrollbar-track {
+        background: rgb(255, 255, 255);
+        /* Light blue track background */
+    }
+
+    *::-webkit-scrollbar-thumb {
+        background-color: rgb(255, 255, 255);
+        /* Blue scrollbar handle */
+        border-radius: 4px;
+        border: 2px solidrgb(255, 255, 255);
+        /* Border for modern look */
+    }
+
+    *::-webkit-scrollbar-thumb:hover {
+        background-color: rgb(255, 255, 255);
+        /* Darker blue on hover */
+    }
     </style>
 </head>
 
@@ -216,7 +263,7 @@ $prescriptionStmt->close();
                     </tr>
                     <tr>
                         <th>Address</th>
-                        <td><?php echo $userDetails['street'] . ', ' . $userDetails['city'] . ', ' . $userDetails['state'] . ', ' . $userDetails['country']; ?></td>
+                        <td><?php echo $addressDetails['street'] . ', ' . $addressDetails['city'] . ', ' . $addressDetails['state'] . ', ' . $addressDetails['country']; ?></td>
                     </tr>
                 </table>
             </div>
