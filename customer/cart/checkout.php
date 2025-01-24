@@ -192,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_order'])) {
                 <p><strong>State:</strong> <?php echo htmlspecialchars($address_details['state']); ?></p>
                 <p><strong>Country:</strong> <?php echo htmlspecialchars($address_details['country']); ?></p>
 
-                <button type="submit" class="update-button">Update Details</button>
+                <button type="submit" class="update-button">Update Address</button>
             </form>
         </div>
 

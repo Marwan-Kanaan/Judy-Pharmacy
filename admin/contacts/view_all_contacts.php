@@ -280,7 +280,7 @@ $conn->close(); // Close the connection
                         <td><?php echo htmlspecialchars($message['customer_email']); ?></td>
                         <td><?php echo htmlspecialchars($message['customer_phone']); ?></td>
                         <td><?php echo htmlspecialchars($message['customer_message']); ?></td>
-                        <td><?php echo htmlspecialchars($message['admin_message']); ?></td>
+                        <td><?php echo nl2br(htmlspecialchars($message['admin_message'])); ?></td>
                         <td><?php echo $message['created_at']; ?></td>
                         <td class="actions">
                             <a href="reply_contact.php?id=<?php echo $message['message_id']; ?> " class="edit" >Reply</a>

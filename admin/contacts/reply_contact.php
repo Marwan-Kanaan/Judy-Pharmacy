@@ -27,7 +27,10 @@ if (!$message) {
 
 // Handle form submission for the reply
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
-    $adminMessage = $conn->real_escape_string($_POST['admin_message']);
+    $adminMessage = $conn->real_escape_string(trim($_POST['admin_message']));
+
+    // Replace newlines with a space (optional if you don't want to store line breaks)
+    $adminMessage = str_replace(["\r", "\n"], "<br> ", $adminMessage);
 
     // Update admin message in the database
     $sqlUpdateMessage = "UPDATE contact_message SET admin_message = ? WHERE id = ?";

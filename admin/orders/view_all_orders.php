@@ -39,14 +39,7 @@ $totalCompletedQuery = "SELECT SUM(o.total_price) FROM orders o
                         LEFT JOIN users u ON o.customer_id = u.id
                         WHERE o.status = 'completed'";
 
-// Apply search filter for counting completed orders
-if (!empty($search)) {
-    $totalCompletedQuery .= " AND (o.id LIKE ? OR u.name LIKE ? OR u.email LIKE ?)";
-    $totalOrdersParams[] = "%$search%";
-    $totalOrdersParams[] = "%$search%";
-    $totalOrdersParams[] = "%$search%";
-    $totalOrdersTypes .= 'sss';
-}
+
 
 $totalCompletedStmt = $conn->prepare($totalCompletedQuery);
 if (!empty($totalOrdersParams)) {

@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'customer') {
 $user_id = $_SESSION['user_id'];
 
 // Fetch cart items for the logged-in user
-$sql = "SELECT c.id, p.name, p.price, c.quantity , p.is_prescription_required
+$sql = "SELECT c.id, p.name, p.price, c.quantity, p.is_prescription_required
         FROM cart c
         JOIN products p ON c.product_id = p.id
         WHERE c.customer_id = ?";
@@ -41,15 +41,14 @@ if (isset($_GET['remove'])) {
 }
 
 // Handle quantity update
-if (isset($_POST['update_quantity'])) {
-    $cart_item_id = $_POST['cart_item_id'];
-    $new_quantity = $_POST['quantity'];
-
-    // Update quantity in the cart
-    $update_sql = "UPDATE cart SET quantity = ? WHERE id = ? AND customer_id = ?";
-    $update_stmt = $conn->prepare($update_sql);
-    $update_stmt->bind_param("iii", $new_quantity, $cart_item_id, $user_id);
-    $update_stmt->execute();
+if (isset($_POST['update_quantities'])) {
+    foreach ($_POST['quantity'] as $cart_item_id => $new_quantity) {
+        $new_quantity = max(1, (int)$new_quantity); // Ensure quantity is at least 1
+        $update_sql = "UPDATE cart SET quantity = ? WHERE id = ? AND customer_id = ?";
+        $update_stmt = $conn->prepare($update_sql);
+        $update_stmt->bind_param("iii", $new_quantity, $cart_item_id, $user_id);
+        $update_stmt->execute();
+    }
     header("Location: cart.php");
     exit();
 }
@@ -313,7 +312,6 @@ $stmt->close();
 </style>
 
 <body>
-
     <div class="container">
         <h1>Your Shopping Cart</h1>
 
@@ -336,23 +334,22 @@ $stmt->close();
                                 <td>$<?php echo number_format($item['price'], 2); ?></td>
                                 <td>
                                     <?php if ($item['is_prescription_required']) : ?>
-                                        <input type="number" name="quantity" value="<?php echo $item['quantity']; ?>" min="1" max="99" class="quantity-input" readonly>
+                                        <input type="number" name="quantity[<?php echo $item['id']; ?>]" value="<?php echo $item['quantity']; ?>" min="1" max="1" class="quantity-input" readonly>
                                         <span class="prescription-note">Prescription required</span>
                                     <?php else : ?>
-                                        <input type="number" name="quantity" value="<?php echo $item['quantity']; ?>" min="1" max="99" class="quantity-input">
-                                        <input type="hidden" name="cart_item_id" value="<?php echo $item['id']; ?>">
+                                        <input type="number" name="quantity[<?php echo $item['id']; ?>]" value="<?php echo $item['quantity']; ?>" min="1" max="99" class="quantity-input">
                                     <?php endif; ?>
                                 </td>
-
                                 <td>$<?php echo number_format($item['price'] * $item['quantity'], 2); ?></td>
                                 <td class="action-buttons">
                                     <a href="cart.php?remove=<?php echo $item['id']; ?>" class="remove-button">Remove</a>
-                                    <button type="submit" name="update_quantity" class="update-button">Update</button>
+                                    <button type="submit" name="update_quantities" class="update-button">Update</button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+                
             </form>
 
             <div class="cart-total">
@@ -360,13 +357,10 @@ $stmt->close();
                 <a href="../../products.php" class="back-button">Back to Products</a>
                 <a href="checkout.php" class="checkout-button">Proceed to Checkout</a>
             </div>
-
         <?php else: ?>
             <p>Your cart is empty. <a href="../../products.php">Browse products</a> to add items to your cart.</p>
         <?php endif; ?>
-
     </div>
-
 </body>
 
 </html>
